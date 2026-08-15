@@ -41,3 +41,10 @@ export type ServiceMetrics = Record<string, number>;
 export interface ServiceHealthMap {
   [service: string]: boolean;
 }
+
+export type UserRole = "VIEWER" | "OPERATOR" | "ADMIN";
+
+export interface AuthUser {
+  username: string;
+  role: UserRole;
+}

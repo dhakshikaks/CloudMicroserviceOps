@@ -5,6 +5,7 @@ import type {
   ServiceHealthMap,
   ServiceMetrics,
 } from "../types";
+import { getToken, logout } from "./auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
 const PROMETHEUS_URL = import.meta.env.VITE_PROMETHEUS_URL ?? "http://localhost:9090";
@@ -20,7 +21,14 @@ export const MONITORED_SERVICES = [
 const JOB_FILTER = MONITORED_SERVICES.join("|");
 
 async function getJson<T>(baseUrl: string, path: string): Promise<T> {
-  const response = await fetch(`${baseUrl}${path}`);
+  const token = getToken();
+  const response = await fetch(`${baseUrl}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  if (response.status === 401) {
+    logout();
+    window.location.href = "/login";
+  }
   if (!response.ok) {
     throw new Error(`Request to ${path} failed with status ${response.status}`);
   }
