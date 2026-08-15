@@ -229,18 +229,6 @@ curl -s "localhost:8080/api/incidents/root-causes?windowMinutes=10" -H "Authoriz
 curl -X POST "localhost:8083/api/test/failure/disable" -H "Authorization: Bearer $TOKEN"
 ```
 
-## College MVP scope
-
-**In scope and implemented:** the full pipeline above — REST call chain,
-Kafka event flow, live dependency graph, deterministic root-cause ranking,
-failure simulation, JWT auth + RBAC, Prometheus/Grafana monitoring, and the
-React dashboard.
-
-**Explicitly out of scope for this MVP:** Kubernetes, multi-cloud
-orchestration, autonomous remediation, machine learning or LLM-based
-scoring, predictive failure propagation, self-learning feedback loops, cloud
-(AWS) deployment, and CI/CD. These are documented as future direction only.
-
 ## Verified end-to-end
 
 The following were exercised against the running Docker Compose stack (not
