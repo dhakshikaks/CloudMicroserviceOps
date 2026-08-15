@@ -38,9 +38,12 @@ export interface ServiceEventRecord {
 
 export type ServiceMetrics = Record<string, number>;
 
+/** true = up, false = down, undefined = not yet scraped/reported. */
 export interface ServiceHealthMap {
-  [service: string]: boolean;
+  [service: string]: boolean | undefined;
 }
+
+export type ServiceStatus = "UP" | "DOWN" | "DEGRADED" | "UNKNOWN";
 
 export type UserRole = "VIEWER" | "OPERATOR" | "ADMIN";
 

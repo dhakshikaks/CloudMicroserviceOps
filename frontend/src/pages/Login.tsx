@@ -25,22 +25,52 @@ export default function Login() {
 
   return (
     <div className="login-page">
-      <form className="login-form" onSubmit={handleSubmit}>
-        <h1>CloudMicroserviceOps</h1>
-        <p className="login-subtitle">Sign in to view the monitoring dashboard</p>
-        <label>
-          Username
-          <input value={username} onChange={(e) => setUsername(e.target.value)} autoFocus required />
-        </label>
-        <label>
-          Password
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        </label>
-        {error && <p className="login-error">{error}</p>}
-        <button type="submit" disabled={loading}>
-          {loading ? "Signing in..." : "Sign in"}
-        </button>
-      </form>
+      <div className="login-card">
+        <div className="login-brand">
+          <span className="login-brand-mark" />
+          <div className="login-brand-text">
+            <h1>CloudMicroserviceOps</h1>
+            <p>Observability &amp; root-cause platform</p>
+          </div>
+        </div>
+
+        <p className="login-description">
+          Monitor service health, inspect the live dependency graph, and review
+          root-cause analysis for the CloudMicroserviceOps platform.
+        </p>
+
+        <form className="login-form" onSubmit={handleSubmit}>
+          <div className="login-field">
+            <label htmlFor="username">Username</label>
+            <input
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoFocus
+              autoComplete="username"
+              required
+            />
+          </div>
+          <div className="login-field">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
+          </div>
+
+          {error && <p className="login-error">{error}</p>}
+
+          <button type="submit" className="login-submit" disabled={loading}>
+            {loading && <span className="login-spinner" />}
+            {loading ? "Signing in..." : "Sign in"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

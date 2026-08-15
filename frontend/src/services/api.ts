@@ -70,7 +70,9 @@ export async function getServiceHealth(): Promise<ServiceHealthMap> {
   const values = await queryPrometheus(`up{job=~"${JOB_FILTER}"}`);
   const health: ServiceHealthMap = {};
   for (const service of MONITORED_SERVICES) {
-    health[service] = values[service] === 1;
+    // Undefined (service missing from the Prometheus vector) is distinct from
+    // an explicit 0 - the former means "not scraped yet", not "down".
+    health[service] = service in values ? values[service] === 1 : undefined;
   }
   return health;
 }

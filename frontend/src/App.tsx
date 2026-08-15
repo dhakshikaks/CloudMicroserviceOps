@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import { getToken } from "./services/auth";
@@ -18,9 +17,7 @@ export default function App() {
           path="/"
           element={
             <RequireAuth>
-              <Layout>
-                <Dashboard />
-              </Layout>
+              <Dashboard />
             </RequireAuth>
           }
         />

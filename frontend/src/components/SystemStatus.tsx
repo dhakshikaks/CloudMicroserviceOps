@@ -1,5 +1,6 @@
 import type { DependencyGraphResponse, RootCauseCandidate, ServiceEventRecord, ServiceHealthMap } from "../types";
 import { MONITORED_SERVICES } from "../services/api";
+import StatCard from "./StatCard";
 
 interface Props {
   health: ServiceHealthMap | null;
@@ -14,23 +15,31 @@ export default function SystemStatus({ health, graph, events, rootCauses }: Prop
   const topCause = rootCauses && rootCauses.length > 0 ? rootCauses[0].service : "None";
 
   return (
-    <section className="status-bar">
-      <div className="status-item">
-        <span className="status-label">Services</span>
-        <span className="status-value">{upCount === null ? "—" : `${upCount}/${MONITORED_SERVICES.length}`}</span>
-      </div>
-      <div className="status-item">
-        <span className="status-label">Active Dependencies</span>
-        <span className="status-value">{graph?.edges.length ?? "—"}</span>
-      </div>
-      <div className="status-item">
-        <span className="status-label">Recent Failures</span>
-        <span className="status-value">{failureCount ?? "—"}</span>
-      </div>
-      <div className="status-item">
-        <span className="status-label">Current Root Cause</span>
-        <span className="status-value">{rootCauses ? topCause : "—"}</span>
-      </div>
-    </section>
+    <div className="stat-grid">
+      <StatCard
+        label="Services"
+        value={upCount === null ? "—" : `${upCount}/${MONITORED_SERVICES.length}`}
+        detail="reporting up"
+        tone={upCount === null ? "default" : upCount === MONITORED_SERVICES.length ? "good" : "critical"}
+      />
+      <StatCard
+        label="Active Dependencies"
+        value={graph ? String(graph.edges.length) : "—"}
+        detail="observed edges"
+        tone="accent"
+      />
+      <StatCard
+        label="Recent Failures"
+        value={failureCount === null ? "—" : String(failureCount)}
+        detail="in recent events"
+        tone={failureCount === null ? "default" : failureCount > 0 ? "warning" : "good"}
+      />
+      <StatCard
+        label="Current Root Cause"
+        value={rootCauses ? topCause : "—"}
+        detail={rootCauses && rootCauses.length > 0 ? `score ${rootCauses[0].score.toFixed(2)}` : "no active incident"}
+        tone={rootCauses && rootCauses.length > 0 ? "critical" : "default"}
+      />
+    </div>
   );
 }

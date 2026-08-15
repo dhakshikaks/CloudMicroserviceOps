@@ -23,7 +23,7 @@ function fmt(value: number | undefined, format: (v: number) => string): string {
 export default function MetricsPanel({ metrics, loading, error }: Props) {
   return (
     <section className="panel">
-      <h2>Runtime Metrics</h2>
+      <h2 className="section-title">Runtime Metrics</h2>
       <SectionState loading={loading} error={error} empty={!metrics}>
         <div className="table-wrap">
           <table className="data-table">
@@ -38,16 +38,21 @@ export default function MetricsPanel({ metrics, loading, error }: Props) {
               </tr>
             </thead>
             <tbody>
-              {MONITORED_SERVICES.map((service) => (
-                <tr key={service}>
-                  <td>{service}</td>
-                  <td>{fmt(metrics?.cpu[service], (v) => `${(v * 100).toFixed(1)}%`)}</td>
-                  <td>{fmt(metrics?.memory[service], (v) => `${(v / 1024 / 1024).toFixed(1)} MB`)}</td>
-                  <td>{fmt(metrics?.requestRate[service], (v) => `${v.toFixed(2)} req/s`)}</td>
-                  <td>{fmt(metrics?.errorRate[service], (v) => `${v.toFixed(2)} req/s`)}</td>
-                  <td>{fmt(metrics?.latencyP95[service], (v) => `${(v * 1000).toFixed(0)} ms`)}</td>
-                </tr>
-              ))}
+              {MONITORED_SERVICES.map((service) => {
+                const errorRate = metrics?.errorRate[service];
+                return (
+                  <tr key={service}>
+                    <td className="cell-muted">{service}</td>
+                    <td>{fmt(metrics?.cpu[service], (v) => `${(v * 100).toFixed(1)}%`)}</td>
+                    <td>{fmt(metrics?.memory[service], (v) => `${(v / 1024 / 1024).toFixed(1)} MB`)}</td>
+                    <td>{fmt(metrics?.requestRate[service], (v) => `${v.toFixed(2)} req/s`)}</td>
+                    <td className={errorRate && errorRate > 0 ? "cell-elevated" : undefined}>
+                      {fmt(errorRate, (v) => `${v.toFixed(2)} req/s`)}
+                    </td>
+                    <td>{fmt(metrics?.latencyP95[service], (v) => `${(v * 1000).toFixed(0)} ms`)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
