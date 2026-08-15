@@ -8,16 +8,17 @@ x-service-env: &service-env
   LOG_LEVEL: ${LOG_LEVEL:-INFO}
   JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me-please-32-bytes-min}
 
+x-restart-policy: &restart-policy unless-stopped
+
 services:
-  # ---------------- Infrastructure ----------------
+  # ---------------- Infrastructure (internal only - no host ports) ----------------
   postgres:
     image: postgres:16-alpine
+    restart: *restart-policy
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-cloudops}
       POSTGRES_USER: ${POSTGRES_USER:-cloudops}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -28,8 +29,7 @@ services:
 
   kafka:
     image: apache/kafka:3.8.0
-    ports:
-      - "9092:9092"
+    restart: *restart-policy
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -45,8 +45,7 @@ services:
 
   prometheus:
     image: prom/prometheus:v2.54.1
-    ports:
-      - "9090:9090"
+    restart: *restart-policy
     volumes:
       - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     depends_on:
@@ -54,8 +53,7 @@ services:
 
   grafana:
     image: grafana/grafana:11.2.0
-    ports:
-      - "3001:3000"
+    restart: *restart-policy
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-change-me}
@@ -65,32 +63,30 @@ services:
     depends_on:
       - prometheus
 
-  # ---------------- Backend ----------------
+  # ---------------- Backend (internal - reached via the frontend's /api proxy) ----------------
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    restart: *restart-policy
     environment:
       <<: *service-env
-      FRONTEND_URL: http://localhost:3000
-    ports:
-      - "8080:8080"
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     depends_on:
       postgres:
         condition: service_healthy
       kafka:
         condition: service_started
 
-  # ---------------- Business microservices ----------------
+  # ---------------- Business microservices (internal only) ----------------
   # Call chain: user-service -> order-service -> payment-service -> inventory-service
   inventory-service:
     build:
       context: .
       dockerfile: microservices/inventory-service/Dockerfile
+    restart: *restart-policy
     environment:
       <<: *service-env
-    ports:
-      - "8084:8084"
     depends_on:
       postgres:
         condition: service_healthy
@@ -101,11 +97,10 @@ services:
     build:
       context: .
       dockerfile: microservices/payment-service/Dockerfile
+    restart: *restart-policy
     environment:
       <<: *service-env
       INVENTORY_SERVICE_URL: http://inventory-service:8084
-    ports:
-      - "8083:8083"
     depends_on:
       postgres:
         condition: service_healthy
@@ -118,11 +113,10 @@ services:
     build:
       context: .
       dockerfile: microservices/order-service/Dockerfile
+    restart: *restart-policy
     environment:
       <<: *service-env
       PAYMENT_SERVICE_URL: http://payment-service:8083
-    ports:
-      - "8082:8082"
     depends_on:
       postgres:
         condition: service_healthy
@@ -135,11 +129,10 @@ services:
     build:
       context: .
       dockerfile: microservices/user-service/Dockerfile
+    restart: *restart-policy
     environment:
       <<: *service-env
       ORDER_SERVICE_URL: http://order-service:8082
-    ports:
-      - "8081:8081"
     depends_on:
       postgres:
         condition: service_healthy
@@ -148,13 +141,17 @@ services:
       order-service:
         condition: service_started
 
-  # ---------------- Frontend ----------------
+  # ---------------- Frontend (the only public entry point) ----------------
   frontend:
     build:
       context: ./frontend
-    environment:
-      VITE_API_BASE_URL: http://localhost:8080
-      VITE_PROMETHEUS_URL: http://localhost:9090
+      args:
+        # Build-time only (Vite inlines these) - relative paths route through
+        # this same container's own Nginx proxy, so they work unchanged for
+        # both local Docker Compose and a single-host cloud deployment.
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+        VITE_PROMETHEUS_URL: ${VITE_PROMETHEUS_URL:-/prometheus}
+    restart: *restart-policy
     ports:
       - "3000:80"
     depends_on:

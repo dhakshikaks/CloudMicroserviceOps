@@ -1,6 +1,7 @@
 import type { AuthUser, UserRole } from "../types";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
+// Same-origin by default: the frontend's own Nginx reverse-proxies /api to the backend.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 const TOKEN_KEY = "cloudops_token";
 const USER_KEY = "cloudops_user";
 
@@ -23,11 +24,11 @@ async function authRequest(path: string, body: unknown): Promise<AuthResponse> {
 }
 
 export async function login(username: string, password: string): Promise<AuthUser> {
-  return persist(await authRequest("/api/auth/login", { username, password }));
+  return persist(await authRequest("/auth/login", { username, password }));
 }
 
 export async function register(username: string, password: string, role: UserRole): Promise<AuthUser> {
-  return persist(await authRequest("/api/auth/register", { username, password, role }));
+  return persist(await authRequest("/auth/register", { username, password, role }));
 }
 
 function persist(auth: AuthResponse): AuthUser {

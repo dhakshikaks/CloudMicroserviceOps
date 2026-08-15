@@ -7,8 +7,10 @@ import type {
 } from "../types";
 import { getToken, logout } from "./auth";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
-const PROMETHEUS_URL = import.meta.env.VITE_PROMETHEUS_URL ?? "http://localhost:9090";
+// Same-origin by default: the frontend's own Nginx reverse-proxies these
+// under /api and /prometheus, so no absolute host/port is baked in.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
+const PROMETHEUS_URL = import.meta.env.VITE_PROMETHEUS_URL ?? "/prometheus";
 
 export const MONITORED_SERVICES = [
   "backend",
@@ -35,16 +37,18 @@ async function getJson<T>(baseUrl: string, path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+// Paths are relative to API_BASE_URL, which already ends in "/api" - do not
+// repeat "/api" here or requests become /api/api/....
 export function getDependencyGraph(): Promise<DependencyGraphResponse> {
-  return getJson(API_BASE_URL, "/api/dependencies/graph");
+  return getJson(API_BASE_URL, "/dependencies/graph");
 }
 
 export function getRootCauses(): Promise<RootCauseCandidate[]> {
-  return getJson(API_BASE_URL, "/api/incidents/root-causes");
+  return getJson(API_BASE_URL, "/incidents/root-causes");
 }
 
 export function getRecentEvents(): Promise<ServiceEventRecord[]> {
-  return getJson(API_BASE_URL, "/api/events/recent");
+  return getJson(API_BASE_URL, "/events/recent");
 }
 
 interface PrometheusVectorResult {

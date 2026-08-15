@@ -1,0 +1,22 @@
+# Applies to the repository-root build context (backend + microservices
+# Dockerfiles). Only excludes what those Java builds never need - the
+# frontend's own build context (./frontend) is unaffected by this file.
+
+.git
+.gitignore
+
+# Frontend - not needed by any Java build, and node_modules is large
+frontend/node_modules
+frontend/dist
+
+# Java build output (rebuilt fresh inside the image anyway)
+**/target
+
+# IDE / OS
+.idea
+.vscode
+*.iml
+.DS_Store
+
+# Secrets - never bake into an image layer
+.env
