@@ -18,6 +18,36 @@ body {
 .dashboard {
   display: grid;
   gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.status-item {
+  flex: 1 1 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.status-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-value {
+  font-size: 1.5rem;
+  font-weight: 700;
 }
 
 .panel {
@@ -70,6 +100,10 @@ body {
   font-weight: 600;
 }
 
+.table-wrap {
+  overflow-x: auto;
+}
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -89,6 +123,31 @@ body {
 
 .status-failure {
   color: var(--down);
+}
+
+.rca-highlight {
+  background: rgba(185, 28, 28, 0.1);
+  border: 1px solid var(--down);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.rca-highlight-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--down);
+}
+
+.rca-highlight-service {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0.15rem 0;
+}
+
+.rca-highlight-score {
+  color: var(--muted);
 }
 
 .rca-list {

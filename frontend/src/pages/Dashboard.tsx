@@ -11,6 +11,7 @@ import {
 } from "../services/api";
 import { useFetchState } from "../hooks/useFetchState";
 import { usePolling } from "../hooks/usePolling";
+import SystemStatus from "../components/SystemStatus";
 import ServiceHealthPanel from "../components/ServiceHealthPanel";
 import MetricsPanel, { type RuntimeMetrics } from "../components/MetricsPanel";
 import DependencyGraphPanel from "../components/DependencyGraphPanel";
@@ -46,6 +47,7 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard">
+      <SystemStatus health={health.data} graph={graph.data} events={events.data} rootCauses={rootCauses.data} />
       <ServiceHealthPanel health={health.data} loading={health.loading} error={health.error} />
       <MetricsPanel metrics={metrics.data} loading={metrics.loading} error={metrics.error} />
       <DependencyGraphPanel graph={graph.data} loading={graph.loading} error={graph.error} />

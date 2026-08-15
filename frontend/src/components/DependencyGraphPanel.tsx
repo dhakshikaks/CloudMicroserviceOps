@@ -17,30 +17,34 @@ export default function DependencyGraphPanel({ graph, loading, error }: Props) {
         empty={!graph || graph.edges.length === 0}
         emptyMessage="No dependencies observed yet."
       >
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Source</th>
-              <th></th>
-              <th>Target</th>
-              <th>Confidence</th>
-              <th>Calls (ok / failed)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {graph?.edges.map((edge) => (
-              <tr key={`${edge.sourceService}->${edge.targetService}`}>
-                <td>{edge.sourceService}</td>
-                <td>&rarr;</td>
-                <td>{edge.targetService}</td>
-                <td>{(edge.confidence * 100).toFixed(0)}%</td>
-                <td>
-                  {edge.successfulCalls} / {edge.failedCalls}
-                </td>
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th></th>
+                <th>Target</th>
+                <th>Total Calls</th>
+                <th>Successful</th>
+                <th>Failed</th>
+                <th>Confidence</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {graph?.edges.map((edge) => (
+                <tr key={`${edge.sourceService}->${edge.targetService}`}>
+                  <td>{edge.sourceService}</td>
+                  <td>&rarr;</td>
+                  <td>{edge.targetService}</td>
+                  <td>{edge.totalCalls}</td>
+                  <td>{edge.successfulCalls}</td>
+                  <td>{edge.failedCalls}</td>
+                  <td>{(edge.confidence * 100).toFixed(0)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </SectionState>
     </section>
   );
