@@ -1,0 +1,132 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --border: #ddd;
+  --muted: #666;
+  --up: #1a7f37;
+  --down: #b91c1c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.dashboard {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+}
+
+.panel h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+}
+
+.state-message {
+  color: var(--muted);
+  margin: 0.5rem 0;
+}
+
+.state-error {
+  color: var(--down);
+}
+
+.health-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.health-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  min-width: 9rem;
+}
+
+.health-name {
+  font-weight: 600;
+}
+
+.health-up .health-status {
+  color: var(--up);
+  font-weight: 600;
+}
+
+.health-down .health-status {
+  color: var(--down);
+  font-weight: 600;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.data-table th,
+.data-table td {
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.status-success {
+  color: var(--up);
+}
+
+.status-failure {
+  color: var(--down);
+}
+
+.rca-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.rca-list li {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+}
+
+.rca-headline {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.rca-rank {
+  color: var(--muted);
+}
+
+.rca-service {
+  font-weight: 600;
+}
+
+.rca-score {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.rca-reason,
+.rca-downstream {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
