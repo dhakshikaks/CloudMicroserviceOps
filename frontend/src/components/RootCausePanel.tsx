@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import type { DependencyGraphResponse, RootCauseCandidate } from "../types";
+import { LIVE_WINDOW_MINUTES } from "../services/api";
 import type { RuntimeMetrics } from "./MetricsPanel";
 import SectionState from "./SectionState";
 
@@ -18,7 +20,39 @@ function fmtRate(v: number | undefined): string {
   return v === undefined ? "—" : `${v.toFixed(2)} req/s`;
 }
 
+// How long the "just recovered" banner stays up after an incident clears,
+// so a resolved incident isn't missed between polls. This is purely a
+// display grace period held in component state - not persisted incident
+// state, and unrelated to LIVE_WINDOW_MINUTES (which controls what RCA
+// itself scores).
+const RECOVERY_DISPLAY_MS = 60_000;
+
+interface IncidentState {
+  status: "healthy" | "incident" | "recovered";
+  lastIncident: RootCauseCandidate | null;
+  recoveredAt: number | null;
+}
+
 export default function RootCausePanel({ candidates, metrics, graph, loading, error }: Props) {
+  const [incident, setIncident] = useState<IncidentState>({
+    status: "healthy",
+    lastIncident: null,
+    recoveredAt: null,
+  });
+
+  useEffect(() => {
+    if (!candidates) return; // still loading - don't change state on a null poll
+    const top = candidates.length > 0 ? candidates[0] : null;
+    setIncident((prev) => {
+      if (top) return { status: "incident", lastIncident: top, recoveredAt: null };
+      if (prev.status === "incident") return { status: "recovered", lastIncident: prev.lastIncident, recoveredAt: Date.now() };
+      if (prev.status === "recovered" && prev.recoveredAt !== null && Date.now() - prev.recoveredAt < RECOVERY_DISPLAY_MS) {
+        return prev;
+      }
+      return { status: "healthy", lastIncident: null, recoveredAt: null };
+    });
+  }, [candidates]);
+
   const top = candidates && candidates.length > 0 ? candidates[0] : null;
   const relatedEdges = graph?.edges.filter(
     (e) => top && (e.sourceService === top.service || e.targetService === top.service)
@@ -28,12 +62,28 @@ export default function RootCausePanel({ candidates, metrics, graph, loading, er
     <section className="panel">
       <h2 className="section-title">Root Cause Analysis</h2>
       <SectionState loading={loading} error={error} empty={false} skeletonRows={2}>
-        {!top && (
-          <div className="rca-clean-state">No active incident - no failures detected in the recent window.</div>
+        {incident.status === "healthy" && (
+          <div className="rca-clean-state tone-good">
+            <div className="rca-state-label tone-good">System healthy</div>
+            <p className="rca-highlight-reason">
+              No active incidents detected in the last {LIVE_WINDOW_MINUTES} minutes.
+            </p>
+          </div>
+        )}
+
+        {incident.status === "recovered" && incident.lastIncident && (
+          <div className="rca-clean-state tone-warning">
+            <div className="rca-state-label tone-warning">System recovered</div>
+            <p className="rca-highlight-reason">
+              The most recent incident ({incident.lastIncident.service}) is no longer active. No failures
+              detected in the last {LIVE_WINDOW_MINUTES} minutes.
+            </p>
+          </div>
         )}
 
         {top && (
           <div className="rca-highlight">
+            <div className="rca-state-label tone-critical">Incident detected</div>
             <div className="rca-highlight-label">Root cause #{top.rank}</div>
             <div className="rca-highlight-service">{top.service}</div>
             <p className="rca-highlight-reason">{top.reason}</p>

@@ -45,7 +45,8 @@ export default function DependencyGraphPanel({ graph, loading, error }: Props) {
     <section className="panel">
       <h2 className="section-title">Dependency Graph</h2>
       <p className="section-subtitle">
-        Live service topology inferred from observed calls - not a static diagram.
+        Cumulative service topology inferred from all observed calls since startup - not a static
+        diagram, and not limited to the dashboard's live window.
       </p>
       <SectionState
         loading={loading}

@@ -444,6 +444,18 @@ a {
   border-color: rgba(107, 116, 128, 0.25);
 }
 
+.status-badge.status-live {
+  color: var(--status-up);
+  background: var(--status-up-soft);
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.status-badge.status-historical {
+  color: var(--status-unknown);
+  background: var(--status-unknown-soft);
+  border-color: rgba(107, 116, 128, 0.25);
+}
+
 /* ---------------- Service health cards ---------------- */
 
 .health-grid {
@@ -560,6 +572,12 @@ a {
 
 .cell-muted {
   color: var(--text-secondary);
+}
+
+.cell-age {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
 }
 
 .cell-elevated {
@@ -722,15 +740,35 @@ a {
 
 .rca-clean-state {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
   padding: 0.9rem 1.1rem;
-  background: var(--status-up-soft);
-  border: 1px solid rgba(34, 197, 94, 0.25);
   border-radius: var(--radius);
   color: var(--text-primary);
   font-size: 0.88rem;
 }
+
+.rca-clean-state.tone-good {
+  background: var(--status-up-soft);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.rca-clean-state.tone-warning {
+  background: var(--status-degraded-soft);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.rca-state-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rca-state-label.tone-good { color: var(--status-up); }
+.rca-state-label.tone-warning { color: var(--status-degraded); }
+.rca-state-label.tone-critical { color: var(--status-down); }
 
 .rca-list {
   list-style: none;

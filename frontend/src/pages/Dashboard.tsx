@@ -8,6 +8,7 @@ import {
   getRequestRate,
   getRootCauses,
   getServiceHealth,
+  LIVE_WINDOW_MINUTES,
   MONITORED_SERVICES,
 } from "../services/api";
 import { useFetchState } from "../hooks/useFetchState";
@@ -39,7 +40,7 @@ export default function Dashboard() {
   usePolling(() => {
     health.run(getServiceHealth());
     graph.run(getDependencyGraph());
-    rootCauses.run(getRootCauses());
+    rootCauses.run(getRootCauses(LIVE_WINDOW_MINUTES));
     events.run(getRecentEvents());
     metrics.run(
       Promise.all([getCpuUsage(), getMemoryUsage(), getRequestRate(), getErrorRate(), getLatencyP95()]).then(

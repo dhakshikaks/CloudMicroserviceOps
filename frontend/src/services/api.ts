@@ -20,6 +20,12 @@ export const MONITORED_SERVICES = [
   "inventory-service",
 ];
 
+// The single lookback window the dashboard treats as "live" - drives the RCA
+// query, the Recent Failures count, and the live/historical split on events.
+// The RCA scoring algorithm itself is untouched; this only controls which
+// window callers ask it to score.
+export const LIVE_WINDOW_MINUTES = 15;
+
 const JOB_FILTER = MONITORED_SERVICES.join("|");
 
 async function getJson<T>(baseUrl: string, path: string): Promise<T> {
@@ -43,8 +49,8 @@ export function getDependencyGraph(): Promise<DependencyGraphResponse> {
   return getJson(API_BASE_URL, "/dependencies/graph");
 }
 
-export function getRootCauses(): Promise<RootCauseCandidate[]> {
-  return getJson(API_BASE_URL, "/incidents/root-causes");
+export function getRootCauses(windowMinutes: number = LIVE_WINDOW_MINUTES): Promise<RootCauseCandidate[]> {
+  return getJson(API_BASE_URL, `/incidents/root-causes?windowMinutes=${windowMinutes}`);
 }
 
 export function getRecentEvents(): Promise<ServiceEventRecord[]> {
