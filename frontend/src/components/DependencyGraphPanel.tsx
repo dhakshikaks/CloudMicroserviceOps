@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type W
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowRight, Maximize2, Minimize2, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
 import type { DependencyEdge, DependencyGraphResponse } from "../types";
+import type { RuntimeMetrics } from "./MetricsPanel";
 import SectionState from "./SectionState";
 import Tooltip from "./charts/Tooltip";
 
@@ -9,6 +10,10 @@ interface Props {
   graph: DependencyGraphResponse | null;
   loading: boolean;
   error: string | null;
+  /** Optional: when provided, hovering a node shows its real live metrics too. */
+  metrics?: RuntimeMetrics | null;
+  /** Floor for the canvas height, e.g. a taller value on a dedicated full-page view. */
+  minCanvasHeight?: number;
 }
 
 /** Longest-path-from-a-root layering, computed purely from the real edges. */
@@ -41,10 +46,11 @@ function computeLayers(graph: DependencyGraphResponse): string[][] {
 // Left-to-right layout (layers = columns): fills a wide canvas far better
 // than a top-to-bottom chain does, and matches how real infra service maps
 // (Datadog, Docker Desktop) are conventionally read - left is upstream.
-const NODE_W = 150;
-const NODE_H = 44;
+// Nodes sized deliberately large - the topology is the product's hero visual.
+const NODE_W = 180;
+const NODE_H = 64;
 const LAYER_GAP_X = 150;
-const NODE_GAP_Y = 32;
+const NODE_GAP_Y = 36;
 
 function computePositions(layers: string[][]): Map<string, { x: number; y: number }> {
   const positions = new Map<string, { x: number; y: number }>();
@@ -80,10 +86,23 @@ function computeNodeStats(nodeId: string, edges: DependencyEdge[]): NodeStats {
   };
 }
 
+function fmtPercent(v: number | undefined): string {
+  return v === undefined ? "—" : `${(v * 100).toFixed(1)}%`;
+}
+function fmtMb(v: number | undefined): string {
+  return v === undefined ? "—" : `${(v / 1024 / 1024).toFixed(1)} MB`;
+}
+function fmtRate(v: number | undefined): string {
+  return v === undefined ? "—" : `${v.toFixed(2)} req/s`;
+}
+function fmtMs(v: number | undefined): string {
+  return v === undefined ? "—" : `${(v * 1000).toFixed(0)} ms`;
+}
+
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 3;
 
-export default function DependencyGraphPanel({ graph, loading, error }: Props) {
+export default function DependencyGraphPanel({ graph, loading, error, metrics, minCanvasHeight }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -94,6 +113,7 @@ export default function DependencyGraphPanel({ graph, loading, error }: Props) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [hoverEdge, setHoverEdge] = useState<{ edge: DependencyEdge; screenX: number; screenY: number } | null>(null);
+  const [hoverNode, setHoverNode] = useState<{ id: string; screenX: number; screenY: number } | null>(null);
   const isDragging = useRef(false);
   const dragOrigin = useRef({ x: 0, y: 0 });
   const panOrigin = useRef({ x: 0, y: 0 });
@@ -113,10 +133,11 @@ export default function DependencyGraphPanel({ graph, loading, error }: Props) {
 
   // Canvas height follows actual content (clamped) instead of wasting a
   // fixed tall box on a simple/narrow graph - avoids the "excessive empty
-  // space" a fixed-height letterboxed viewBox would otherwise produce.
-  const canvasHeight = Math.min(560, Math.max(220, totalHeight + 90));
+  // space" a fixed-height letterboxed viewBox would otherwise produce, while
+  // still giving the topology real presence as the product's hero visual.
+  const canvasHeight = Math.min(620, Math.max(minCanvasHeight ?? 280, totalHeight + 120));
 
-  const baseViewBox = { x: -30, y: -30, w: totalWidth + 60, h: totalHeight + 60 };
+  const baseViewBox = { x: -30, y: -40, w: totalWidth + 60, h: totalHeight + 80 };
   const viewBox = {
     x: baseViewBox.x + pan.x,
     y: baseViewBox.y + pan.y,
@@ -220,10 +241,10 @@ export default function DependencyGraphPanel({ graph, loading, error }: Props) {
               onMouseLeave={stopDragging}
             >
               <defs>
-                <marker id="topology-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <marker id="topology-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
                   <path d="M0,0 L10,5 L0,10 z" className="topology-arrowhead" />
                 </marker>
-                <marker id="topology-arrow-failed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <marker id="topology-arrow-failed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
                   <path d="M0,0 L10,5 L0,10 z" className="topology-arrowhead failed" />
                 </marker>
               </defs>
@@ -239,31 +260,42 @@ export default function DependencyGraphPanel({ graph, loading, error }: Props) {
                 const midX = (x1 + x2) / 2;
                 const midY = (y1 + y2) / 2;
                 const hasFailures = edge.failedCalls > 0;
+                const failurePct = edge.totalCalls > 0 ? Math.round((edge.failedCalls / edge.totalCalls) * 100) : 0;
+                const pathId = `edge-${edge.sourceService}-${edge.targetService}`;
                 const labelText = hasFailures
-                  ? `${edge.totalCalls} · ${edge.failedCalls} failed`
-                  : `${edge.totalCalls} · ${Math.round(edge.confidence * 100)}%`;
+                  ? `${edge.totalCalls} calls · ${edge.failedCalls} failed · ${failurePct}%`
+                  : `${edge.totalCalls} calls · ${Math.round(edge.confidence * 100)}%`;
+                const pathD = `M${x1},${y1} C${midX},${y1} ${midX},${y2} ${x2},${y2}`;
                 return (
                   <g
-                    key={`${edge.sourceService}->${edge.targetService}`}
+                    key={pathId}
                     onMouseEnter={(e) => setHoverEdge({ edge, screenX: e.clientX, screenY: e.clientY })}
                     onMouseMove={(e) => setHoverEdge({ edge, screenX: e.clientX, screenY: e.clientY })}
                     onMouseLeave={() => setHoverEdge(null)}
                   >
                     <path
-                      d={`M${x1},${y1} C${midX},${y1} ${midX},${y2} ${x2},${y2}`}
+                      id={pathId}
+                      d={pathD}
                       className={`topology-edge${hasFailures ? " has-failures" : ""}`}
                       markerEnd={`url(#${hasFailures ? "topology-arrow-failed" : "topology-arrow"})`}
                     />
+                    {/* Traffic direction indicator - a dot travels the real edge path on a
+                        loop, communicating live flow direction, not decorative motion. */}
+                    <circle r={2.5} className={`topology-traffic-dot${hasFailures ? " has-failures" : ""}`}>
+                      <animateMotion dur="2.4s" repeatCount="indefinite" rotate="auto">
+                        <mpath href={`#${pathId}`} />
+                      </animateMotion>
+                    </circle>
                     <rect
                       x={midX - labelText.length * 2.6}
-                      y={midY - 15}
+                      y={midY - 17}
                       width={labelText.length * 5.2}
-                      height={12}
+                      height={13}
                       className="topology-edge-label-bg"
                     />
                     <text
                       x={midX}
-                      y={midY - 6}
+                      y={midY - 7}
                       textAnchor="middle"
                       className={`topology-edge-label${hasFailures ? " has-failures" : ""}`}
                     >
@@ -283,6 +315,9 @@ export default function DependencyGraphPanel({ graph, loading, error }: Props) {
                     transform={`translate(${pos.x},${pos.y})`}
                     className="topology-node-group"
                     onClick={() => setSelectedNodeId((prev) => (prev === nodeId ? null : nodeId))}
+                    onMouseEnter={(e) => setHoverNode({ id: nodeId, screenX: e.clientX, screenY: e.clientY })}
+                    onMouseMove={(e) => setHoverNode({ id: nodeId, screenX: e.clientX, screenY: e.clientY })}
+                    onMouseLeave={() => setHoverNode(null)}
                   >
                     <rect
                       width={NODE_W}
@@ -290,8 +325,11 @@ export default function DependencyGraphPanel({ graph, loading, error }: Props) {
                       rx={2}
                       className={`topology-node-rect${degraded ? " degraded" : ""}${selected ? " selected" : ""}`}
                     />
-                    <text x={NODE_W / 2} y={NODE_H / 2 + 5} textAnchor="middle" className="topology-node-label">
+                    <text x={NODE_W / 2} y={NODE_H / 2 - 4} textAnchor="middle" className="topology-node-label">
                       {nodeId}
+                    </text>
+                    <text x={NODE_W / 2} y={NODE_H / 2 + 16} textAnchor="middle" className="topology-node-sublabel">
+                      {degraded ? `${stats.failedIn} failed` : "healthy"}
                     </text>
                   </g>
                 );
@@ -337,11 +375,39 @@ export default function DependencyGraphPanel({ graph, loading, error }: Props) {
             <div className="chart-tooltip-time">
               {hoverEdge.edge.sourceService} &rarr; {hoverEdge.edge.targetService}
             </div>
-            <div>{hoverEdge.edge.totalCalls} total &middot; {hoverEdge.edge.successfulCalls} ok &middot; {hoverEdge.edge.failedCalls} failed</div>
-            <div>{Math.round(hoverEdge.edge.confidence * 100)}% confidence</div>
+            <div>{hoverEdge.edge.totalCalls} requests</div>
+            <div>{hoverEdge.edge.successfulCalls} success &middot; {hoverEdge.edge.failedCalls} failed</div>
+            <div>
+              {hoverEdge.edge.totalCalls > 0 ? Math.round((hoverEdge.edge.failedCalls / hoverEdge.edge.totalCalls) * 100) : 0}%
+              error rate &middot; {Math.round(hoverEdge.edge.confidence * 100)}% confidence
+            </div>
             {hoverEdge.edge.lastObservedAt && (
               <div className="chart-tooltip-muted">{new Date(hoverEdge.edge.lastObservedAt).toLocaleTimeString()}</div>
             )}
+          </Tooltip>
+        )}
+
+        {hoverNode && graph && (
+          <Tooltip x={hoverNode.screenX} y={hoverNode.screenY}>
+            <div className="chart-tooltip-time">{hoverNode.id}</div>
+            {metrics ? (
+              <>
+                <div>CPU {fmtPercent(metrics.cpu[hoverNode.id])} &middot; Mem {fmtMb(metrics.memory[hoverNode.id])}</div>
+                <div>{fmtRate(metrics.requestRate[hoverNode.id])} &middot; err {fmtRate(metrics.errorRate[hoverNode.id])}</div>
+                <div>P95 {fmtMs(metrics.latencyP95[hoverNode.id])}</div>
+              </>
+            ) : (
+              (() => {
+                const stats = computeNodeStats(hoverNode.id, graph.edges);
+                return (
+                  <>
+                    <div>{stats.incomingCount} in / {stats.outgoingCount} out deps</div>
+                    <div>{stats.totalIn} calls in, {stats.totalOut} out</div>
+                  </>
+                );
+              })()
+            )}
+            <div className="chart-tooltip-muted">Click to select, then inspect</div>
           </Tooltip>
         )}
       </SectionState>

@@ -96,7 +96,7 @@ export default function Overview() {
 
       <div className="command-grid">
         <div className="command-grid-topology">
-          <DependencyGraphPanel graph={graph.data} loading={graph.loading} error={graph.error} />
+          <DependencyGraphPanel graph={graph.data} loading={graph.loading} error={graph.error} metrics={metrics.data} />
         </div>
         <div className="command-grid-incident">
           <RootCauseSummaryCard
@@ -128,7 +128,13 @@ export default function Overview() {
         </div>
         <div className="trend-card">
           <h3>Error rate</h3>
-          <LineChart samples={errorRateTrend.data?.[0]?.samples ?? []} width={500} height={130} yFormat={(v) => `${v.toFixed(2)}/s`} />
+          <LineChart
+            samples={errorRateTrend.data?.[0]?.samples ?? []}
+            width={500}
+            height={130}
+            yFormat={(v) => `${v.toFixed(2)}/s`}
+            tone={(errorRateTrend.data?.[0]?.samples ?? []).some((s) => s.value > 0) ? "critical" : "default"}
+          />
         </div>
       </div>
 

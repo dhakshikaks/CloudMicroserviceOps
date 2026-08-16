@@ -8,6 +8,8 @@ interface Props {
   height?: number;
   yFormat?: (v: number) => string;
   emptyLabel?: string;
+  /** critical = error-data series, rendered in red instead of the default blue. */
+  tone?: "default" | "critical";
 }
 
 const DEFAULT_EMPTY_LABEL = "Historical data unavailable - collecting since restart";
@@ -19,6 +21,7 @@ export default function LineChart({
   height = 160,
   yFormat = (v) => v.toFixed(2),
   emptyLabel = DEFAULT_EMPTY_LABEL,
+  tone = "default",
 }: Props) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -69,11 +72,15 @@ export default function LineChart({
     hoverScreenY = rect.top + yFor(hovered.value) * scale;
   }
 
+  const lastIndex = samples.length - 1;
+  const lastX = xFor(lastIndex);
+  const lastY = yFor(samples[lastIndex].value);
+
   return (
     <div className="linechart-wrap">
       <svg
         ref={svgRef}
-        className="linechart"
+        className={`linechart${tone === "critical" ? " tone-critical" : ""}`}
         width={width}
         height={height}
         viewBox={`0 0 ${width} ${height}`}
@@ -81,6 +88,14 @@ export default function LineChart({
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setHoverIndex(null)}
       >
+        <line x1={padding.left} y1={padding.top} x2={width - padding.right} y2={padding.top} className="linechart-grid" />
+        <line
+          x1={padding.left}
+          y1={padding.top + innerHeight / 2}
+          x2={width - padding.right}
+          y2={padding.top + innerHeight / 2}
+          className="linechart-grid"
+        />
         <line x1={padding.left} y1={padding.top} x2={padding.left} y2={padding.top + innerHeight} className="linechart-axis" />
         <line
           x1={padding.left}
@@ -109,6 +124,11 @@ export default function LineChart({
 
         <path d={areaD} className="linechart-area" />
         <path d={pathD} className="linechart-line" />
+
+        {/* Live indicator - a soft pulsing ring on the most recent real datapoint,
+            communicating this series is still streaming, not a static snapshot. */}
+        <circle cx={lastX} cy={lastY} r={7} className="linechart-live-ring" />
+        <circle cx={lastX} cy={lastY} r={2.5} className="linechart-live-dot" />
 
         {hovered && hoverIndex !== null && (
           <>

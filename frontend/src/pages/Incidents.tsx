@@ -95,6 +95,17 @@ export default function Incidents() {
 
   const path = top && graph.data ? buildDependencyPath(top.service, graph.data.edges) : [];
 
+  // A real, traceable identifier - the eventId of the earliest FAILURE event
+  // targeting the root-cause service in this window - not a fabricated
+  // sequence number.
+  const triggeringEvent = top
+    ? [...timeline]
+        .filter((e) => e.status === "FAILURE" && e.targetService === top.service)
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())[0]
+    : undefined;
+  const incidentId = triggeringEvent?.eventId.slice(0, 8).toUpperCase();
+  const failureCount = timeline.filter((e) => e.status === "FAILURE").length;
+
   return (
     <div className="page">
       <div className="page-header">
@@ -122,6 +133,7 @@ export default function Incidents() {
           <>
             <div className="incident-header">
               <span className="incident-header-label">Incident</span>
+              {incidentId && <span className="incident-header-id">#{incidentId}</span>}
               <span className="incident-header-service">{top.service}</span>
             </div>
 
@@ -142,6 +154,12 @@ export default function Incidents() {
                 <span className="summary-label">Impact</span>
                 <div className="summary-value" style={{ fontSize: "1.05rem" }}>
                   {top.affectedDownstreamServices.length > 0 ? top.affectedDownstreamServices.join(", ") : "none"}
+                </div>
+              </div>
+              <div className="incident-meta-item">
+                <span className="summary-label">Failures ({LIVE_WINDOW_MINUTES}m)</span>
+                <div className="summary-value tone-critical" style={{ fontSize: "1.05rem" }}>
+                  {failureCount}
                 </div>
               </div>
             </div>
