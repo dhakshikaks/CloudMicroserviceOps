@@ -1,4 +1,5 @@
 import type {
+  DependencyEdge,
   DependencyGraphResponse,
   RootCauseCandidate,
   ServiceEventRecord,
@@ -57,6 +58,12 @@ export function getRecentEvents(): Promise<ServiceEventRecord[]> {
   return getJson(API_BASE_URL, "/events/recent");
 }
 
+// Edge list without the {nodes} wrapper - same data as getDependencyGraph(),
+// used where a flat list is more convenient (e.g. filtering to one service).
+export function getDependencies(): Promise<DependencyEdge[]> {
+  return getJson(API_BASE_URL, "/dependencies");
+}
+
 interface PrometheusVectorResult {
   data: {
     result: Array<{ metric: Record<string, string>; value: [number, string] }>;
@@ -109,4 +116,123 @@ export function getLatencyP95(): Promise<ServiceMetrics> {
   return queryPrometheus(
     `histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=~"${JOB_FILTER}"}[1m])) by (le, job))`
   );
+}
+
+// ---------------------------------------------------------------------------
+// Historical (query_range) data. Prometheus genuinely stores this - verified
+// live against the running stack - so charts built from it are real, not
+// fabricated. Caveat callers must handle: Prometheus has no data volume
+// mounted, so history resets to empty on every container restart; a fresh
+// stack legitimately returns few/zero points for a while.
+
+export type TimeWindow = "5m" | "15m" | "1h" | "6h" | "24h";
+
+export const TIME_WINDOWS: TimeWindow[] = ["5m", "15m", "1h", "6h", "24h"];
+
+const TIME_WINDOW_SECONDS: Record<TimeWindow, number> = {
+  "5m": 5 * 60,
+  "15m": 15 * 60,
+  "1h": 60 * 60,
+  "6h": 6 * 60 * 60,
+  "24h": 24 * 60 * 60,
+};
+
+// Step chosen per window to keep each series to a few hundred points at most.
+const RANGE_STEP_SECONDS: Record<TimeWindow, number> = {
+  "5m": 15,
+  "15m": 15,
+  "1h": 30,
+  "6h": 120,
+  "24h": 300,
+};
+
+export interface RangeSample {
+  timestampSec: number;
+  value: number;
+}
+
+export interface RangeSeries {
+  metric: Record<string, string>;
+  samples: RangeSample[];
+}
+
+export function buildRangeParams(window: TimeWindow, nowSec: number = Date.now() / 1000) {
+  const end = Math.floor(nowSec);
+  const start = end - TIME_WINDOW_SECONDS[window];
+  const step = RANGE_STEP_SECONDS[window];
+  return { start, end, step };
+}
+
+interface PrometheusRangeResult {
+  data: {
+    result: Array<{ metric: Record<string, string>; values: Array<[number, string]> }>;
+  };
+}
+
+export async function queryPrometheusRange(promql: string, window: TimeWindow): Promise<RangeSeries[]> {
+  const { start, end, step } = buildRangeParams(window);
+  const url = `${PROMETHEUS_URL}/api/v1/query_range?query=${encodeURIComponent(promql)}&start=${start}&end=${end}&step=${step}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Prometheus range query failed with status ${response.status}`);
+  }
+  const body = (await response.json()) as PrometheusRangeResult;
+  return body.data.result.map((series) => ({
+    metric: series.metric,
+    samples: series.values.map(([timestampSec, value]) => ({ timestampSec, value: Number(value) })),
+  }));
+}
+
+// Aggregate (single series, summed/averaged across all monitored services via
+// PromQL itself) - used for Overview's command-center trend charts, which
+// intentionally show one honest line rather than a multi-color per-service
+// overlay (see index.css / design notes on restrained color use).
+export function getRequestRateRange(window: TimeWindow): Promise<RangeSeries[]> {
+  return queryPrometheusRange(`sum(rate(http_server_requests_seconds_count{job=~"${JOB_FILTER}"}[1m]))`, window);
+}
+
+export function getErrorRateRange(window: TimeWindow): Promise<RangeSeries[]> {
+  return queryPrometheusRange(
+    `sum(rate(http_server_requests_seconds_count{job=~"${JOB_FILTER}", status=~"5.."}[1m]))`,
+    window
+  );
+}
+
+export function getLatencyP95Range(window: TimeWindow): Promise<RangeSeries[]> {
+  return queryPrometheusRange(
+    `histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=~"${JOB_FILTER}"}[1m])) by (le))`,
+    window
+  );
+}
+
+export function getCpuUsageRange(window: TimeWindow): Promise<RangeSeries[]> {
+  return queryPrometheusRange(`avg(process_cpu_usage{job=~"${JOB_FILTER}"})`, window);
+}
+
+// Per-service (one series per job, metric.job identifies which) - used for
+// the Metrics page's small-multiples breakdown and the Service Inspector.
+export function getRequestRateRangeByService(window: TimeWindow): Promise<RangeSeries[]> {
+  return queryPrometheusRange(`sum(rate(http_server_requests_seconds_count{job=~"${JOB_FILTER}"}[1m])) by (job)`, window);
+}
+
+export function getErrorRateRangeByService(window: TimeWindow): Promise<RangeSeries[]> {
+  return queryPrometheusRange(
+    `sum(rate(http_server_requests_seconds_count{job=~"${JOB_FILTER}", status=~"5.."}[1m])) by (job)`,
+    window
+  );
+}
+
+export function getLatencyP95RangeByService(window: TimeWindow): Promise<RangeSeries[]> {
+  return queryPrometheusRange(
+    `histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=~"${JOB_FILTER}"}[1m])) by (le, job))`,
+    window
+  );
+}
+
+export function getCpuUsageRangeByService(window: TimeWindow): Promise<RangeSeries[]> {
+  return queryPrometheusRange(`process_cpu_usage{job=~"${JOB_FILTER}"}`, window);
+}
+
+export function getMemoryUsageRangeByService(window: TimeWindow): Promise<RangeSeries[]> {
+  return queryPrometheusRange(`sum(jvm_memory_used_bytes{area="heap", job=~"${JOB_FILTER}"}) by (job)`, window);
 }

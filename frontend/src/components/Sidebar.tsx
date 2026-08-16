@@ -1,28 +1,60 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+  Activity,
+  AlertTriangle,
+  HeartPulse,
+  LayoutDashboard,
+  LineChart,
+  LogOut,
+  Network,
+  Server,
+  type LucideIcon,
+} from "lucide-react";
+import type { ServiceHealthMap } from "../types";
 import { getCurrentUser, logout } from "../services/auth";
+import { getServiceHealth, MONITORED_SERVICES } from "../services/api";
+import { useFetchState } from "../hooks/useFetchState";
+import { usePolling } from "../hooks/usePolling";
+import { deriveSystemPulse } from "../lib/status";
 
-const NAV_ITEMS = [
-  { id: "overview", label: "Overview" },
-  { id: "services", label: "Services" },
-  { id: "dependency-graph", label: "Dependency Graph" },
-  { id: "incidents", label: "Incidents / Root Cause" },
-  { id: "events", label: "Events" },
-];
+const POLL_INTERVAL_MS = 7000;
 
-interface Props {
-  systemPulse: "ok" | "warn" | "unknown";
+interface NavItem {
+  to: string;
+  label: string;
+  icon: LucideIcon;
+  end?: boolean;
 }
 
-export default function Sidebar({ systemPulse }: Props) {
-  const [active, setActive] = useState("overview");
+interface NavSection {
+  heading: string | null;
+  items: NavItem[];
+}
+
+const NAV_SECTIONS: NavSection[] = [
+  { heading: null, items: [{ to: "/", label: "Overview", icon: LayoutDashboard, end: true }] },
+  {
+    heading: "Monitoring",
+    items: [
+      { to: "/services", label: "Services", icon: Server },
+      { to: "/topology", label: "Topology", icon: Network },
+      { to: "/metrics", label: "Metrics", icon: LineChart },
+      { to: "/events", label: "Events", icon: Activity },
+    ],
+  },
+  { heading: "Incidents", items: [{ to: "/incidents", label: "Root Cause", icon: AlertTriangle }] },
+  { heading: "System", items: [{ to: "/system/health", label: "Health", icon: HeartPulse }] },
+];
+
+export default function Sidebar() {
+  // Self-contained: the sidebar's pulse dot needs live health, independent of
+  // whatever the current page is already fetching for its own display.
+  const health = useFetchState<ServiceHealthMap>();
+  usePolling(() => health.run(getServiceHealth()), POLL_INTERVAL_MS);
+  const systemPulse = deriveSystemPulse(health.data, MONITORED_SERVICES);
+
   const user = getCurrentUser();
   const navigate = useNavigate();
-
-  function handleNavClick(id: string) {
-    setActive(id);
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
 
   function handleLogout() {
     logout();
@@ -31,6 +63,10 @@ export default function Sidebar({ systemPulse }: Props) {
 
   const pulseLabel =
     systemPulse === "ok" ? "All systems operational" : systemPulse === "warn" ? "Degraded" : "Checking status";
+  // "warn" from deriveSystemPulse means a service is confirmed down (worse
+  // than merely unknown), so it maps to the red "bad" dot; "unknown" (status
+  // not yet observed) maps to the amber "warn" dot. Intentional, not a typo.
+  const pulseDotClass = systemPulse === "ok" ? "ok" : systemPulse === "warn" ? "bad" : "warn";
 
   return (
     <aside className="sidebar">
@@ -43,22 +79,27 @@ export default function Sidebar({ systemPulse }: Props) {
       </div>
 
       <nav className="sidebar-nav">
-        {NAV_ITEMS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className={`sidebar-link${active === item.id ? " active" : ""}`}
-            onClick={() => handleNavClick(item.id)}
-          >
-            <span className="sidebar-link-dot" />
-            {item.label}
-          </button>
+        {NAV_SECTIONS.map((section, i) => (
+          <div className="sidebar-section" key={section.heading ?? `section-${i}`}>
+            {section.heading && <div className="sidebar-section-heading">{section.heading}</div>}
+            {section.items.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) => `sidebar-link${isActive ? " active" : ""}`}
+              >
+                <item.icon size={15} className="sidebar-link-icon" />
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
         ))}
       </nav>
 
       <div className="sidebar-footer">
         <div className="system-pulse">
-          <span className={`system-pulse-dot ${systemPulse === "ok" ? "ok" : systemPulse === "warn" ? "bad" : "warn"}`} />
+          <span className={`system-pulse-dot ${pulseDotClass}`} />
           <span>{pulseLabel}</span>
         </div>
         {user && (
@@ -67,8 +108,8 @@ export default function Sidebar({ systemPulse }: Props) {
               <span className="sidebar-user-name">{user.username}</span>
               <span className="sidebar-user-role">{user.role}</span>
             </div>
-            <button type="button" className="logout-button" onClick={handleLogout}>
-              Log out
+            <button type="button" className="logout-button" onClick={handleLogout} title="Log out">
+              <LogOut size={13} />
             </button>
           </div>
         )}
