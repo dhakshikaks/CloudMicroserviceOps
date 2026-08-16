@@ -47,7 +47,7 @@ export default function Services() {
     <div className="page">
       <div className="page-header">
         <h1>Services</h1>
-        <p>Click a service to inspect its dependencies, metrics, and recent activity.</p>
+        <p>{MONITORED_SERVICES.length} monitored</p>
       </div>
       <SectionState loading={health.loading} error={health.error} empty={!health.data}>
         <div className="services-grid">
@@ -65,15 +65,15 @@ export default function Services() {
                     <span>{fmtPercent(metrics.data?.cpu[service])}</span>
                   </div>
                   <div>
-                    <span className="stat-label">Req rate</span>
+                    <span className="stat-label">Req/s</span>
                     <span>{fmtRate(metrics.data?.requestRate[service])}</span>
                   </div>
                   <div>
-                    <span className="stat-label">Error rate</span>
+                    <span className="stat-label">Err/s</span>
                     <span>{fmtRate(metrics.data?.errorRate[service])}</span>
                   </div>
                   <div>
-                    <span className="stat-label">p95</span>
+                    <span className="stat-label">P95</span>
                     <span>{fmtMs(metrics.data?.latencyP95[service])}</span>
                   </div>
                 </div>

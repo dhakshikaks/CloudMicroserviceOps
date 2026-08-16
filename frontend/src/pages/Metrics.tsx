@@ -9,6 +9,7 @@ import {
   getMemoryUsage,
   getMemoryUsageRangeByService,
   getRequestRate,
+  getRequestRateRange,
   getRequestRateRangeByService,
   MONITORED_SERVICES,
   type RangeSeries,
@@ -18,6 +19,7 @@ import { usePolling } from "../hooks/usePolling";
 import { useTimeWindow } from "../context/TimeWindowContext";
 import MetricsPanel, { type RuntimeMetrics } from "../components/MetricsPanel";
 import Sparkline from "../components/charts/Sparkline";
+import LineChart from "../components/charts/LineChart";
 
 const POLL_INTERVAL_MS = 7000;
 const TREND_POLL_INTERVAL_MS = 15000;
@@ -32,6 +34,7 @@ export default function Metrics() {
   const { timeWindow } = useTimeWindow();
   const metrics = useFetchState<RuntimeMetrics>();
 
+  const requestRateTotal = useFetchState<RangeSeries[]>();
   const requestRateHistory = useFetchState<RangeSeries[]>();
   const errorRateHistory = useFetchState<RangeSeries[]>();
   const latencyHistory = useFetchState<RangeSeries[]>();
@@ -52,14 +55,16 @@ export default function Metrics() {
     let cancelled = false;
     function fetchTrends() {
       Promise.all([
+        getRequestRateRange(timeWindow),
         getRequestRateRangeByService(timeWindow),
         getErrorRateRangeByService(timeWindow),
         getLatencyP95RangeByService(timeWindow),
         getCpuUsageRangeByService(timeWindow),
         getMemoryUsageRangeByService(timeWindow),
       ])
-        .then(([rr, er, lat, cpu, mem]) => {
+        .then(([total, rr, er, lat, cpu, mem]) => {
           if (cancelled) return;
+          requestRateTotal.run(Promise.resolve(total));
           requestRateHistory.run(Promise.resolve(rr));
           errorRateHistory.run(Promise.resolve(er));
           latencyHistory.run(Promise.resolve(lat));
@@ -92,27 +97,38 @@ export default function Metrics() {
       toneFor: (service) => {
         const s = samplesFor(cpuHistory.data, service);
         const last = s[s.length - 1]?.value;
-        return last !== undefined && last > 0.85 ? "critical" : last !== undefined && last > 0.6 ? "warning" : "default";
+        return last !== undefined && last > 0.85 ? "critical" : "default";
       },
     },
     { label: "Memory", data: memoryHistory.data, toneFor: () => "default" },
   ];
 
-  const updatedLabel = updatedAt ? `Updated ${Math.max(0, Math.round((Date.now() - updatedAt) / 1000))}s ago` : "";
+  const totalSamples = requestRateTotal.data?.[0]?.samples ?? [];
+  const totalNow = totalSamples.length > 0 ? totalSamples[totalSamples.length - 1].value : undefined;
+  const updatedLabel = updatedAt ? `${Math.max(0, Math.round((Date.now() - updatedAt) / 1000))}s ago` : "";
 
   return (
     <div className="page">
       <div className="page-header">
         <h1>Metrics</h1>
-        <p>Current values and per-service trends over the selected chart window.</p>
+      </div>
+
+      <div className="dominant-chart">
+        <div className="dominant-chart-head">
+          <h2>Request rate — all services</h2>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "0.75rem" }}>
+            {updatedLabel && <span className="last-updated">{updatedLabel}</span>}
+            <span className="dominant-chart-value">{totalNow === undefined ? "—" : `${totalNow.toFixed(2)}/s`}</span>
+          </div>
+        </div>
+        <LineChart samples={totalSamples} width={1200} height={220} yFormat={(v) => `${v.toFixed(1)}/s`} />
       </div>
 
       <MetricsPanel metrics={metrics.data} loading={metrics.loading} error={metrics.error} />
 
       <section className="panel">
         <div className="panel-header-row">
-          <h2 className="section-title">Trends by service</h2>
-          {updatedLabel && <span className="last-updated">{updatedLabel}</span>}
+          <h2 className="section-title">Per-service trends</h2>
         </div>
         <div className="metrics-multiples">
           <div className="metrics-multiples-header">
@@ -128,7 +144,7 @@ export default function Metrics() {
               <span className="metrics-multiples-label">{row.label}</span>
               {MONITORED_SERVICES.map((service) => (
                 <div key={service} className="metrics-multiples-cell">
-                  <Sparkline samples={samplesFor(row.data, service)} width={90} height={28} tone={row.toneFor(service)} />
+                  <Sparkline samples={samplesFor(row.data, service)} width={84} height={26} tone={row.toneFor(service)} />
                 </div>
               ))}
             </div>

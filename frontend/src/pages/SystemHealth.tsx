@@ -40,7 +40,6 @@ export default function SystemHealth() {
     <div className="page">
       <div className="page-header">
         <h1>System Health</h1>
-        <p>At-a-glance status: real up/down checks and session identity, not a duplicate metrics view.</p>
       </div>
 
       <section className="panel">
@@ -67,11 +66,7 @@ export default function SystemHealth() {
           <span>Prometheus (/prometheus)</span>
           <StatusBadge status={prometheusReachable === null ? "UNKNOWN" : prometheusReachable ? "UP" : "DOWN"} />
         </div>
-        <p className="section-subtitle">
-          {prometheusReachable === false &&
-            "Charts and per-service metrics elsewhere in the app will be unavailable while this is unreachable."}
-          {prometheusReachable === true && "Metrics and historical charts elsewhere in the app depend on this being reachable."}
-        </p>
+        {prometheusReachable === false && <p className="section-subtitle">Charts and metrics elsewhere will be unavailable.</p>}
       </section>
 
       <section className="panel">

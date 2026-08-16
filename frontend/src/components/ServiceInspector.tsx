@@ -103,40 +103,42 @@ export default function ServiceInspector({ serviceName, onClose }: Props) {
     <div className="service-inspector">
       <div className="service-inspector-head">
         <div>
+          <span className="service-inspector-eyebrow">Service</span>
           <div className="service-inspector-name">{serviceName}</div>
           <StatusBadge status={status} />
         </div>
         <div className="service-inspector-actions">
           <button type="button" title="Refresh" onClick={loadAll}>
-            <RefreshCw size={15} />
+            <RefreshCw size={14} />
           </button>
           <button type="button" title="Close" onClick={onClose}>
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
       </div>
 
       <SectionState loading={snapshot.loading} error={snapshot.error} empty={false} skeletonRows={3}>
-        <div className="service-inspector-stats">
-          <div className="service-inspector-stat">
-            <span className="stat-label">CPU</span>
-            <span className="stat-value">{fmtPercent(snapshot.data?.cpu[serviceName])}</span>
+        <div className="service-inspector-section">
+          <h3>Metrics</h3>
+          <div className="inspector-row">
+            <span className="inspector-row-label">CPU</span>
+            <span className="inspector-row-value">{fmtPercent(snapshot.data?.cpu[serviceName])}</span>
           </div>
-          <div className="service-inspector-stat">
-            <span className="stat-label">Memory</span>
-            <span className="stat-value">{fmtMb(snapshot.data?.memory[serviceName])}</span>
+          <div className="inspector-row">
+            <span className="inspector-row-label">Memory</span>
+            <span className="inspector-row-value">{fmtMb(snapshot.data?.memory[serviceName])}</span>
           </div>
-          <div className="service-inspector-stat">
-            <span className="stat-label">Request rate</span>
-            <span className="stat-value">{fmtRate(snapshot.data?.requestRate[serviceName])}</span>
+          <div className="inspector-row">
+            <span className="inspector-row-label">Request rate</span>
+            <span className="inspector-row-value">{fmtRate(snapshot.data?.requestRate[serviceName])}</span>
           </div>
-          <div className="service-inspector-stat">
-            <span className="stat-label">Error rate</span>
-            <span className="stat-value">{fmtRate(snapshot.data?.errorRate[serviceName])}</span>
+          <div className="inspector-row">
+            <span className="inspector-row-label">Error rate</span>
+            <span className="inspector-row-value">{fmtRate(snapshot.data?.errorRate[serviceName])}</span>
           </div>
-          <div className="service-inspector-stat">
-            <span className="stat-label">P95 latency</span>
-            <span className="stat-value">{fmtMs(snapshot.data?.latencyP95[serviceName])}</span>
+          <div className="inspector-row">
+            <span className="inspector-row-label">P95 latency</span>
+            <span className="inspector-row-value">{fmtMs(snapshot.data?.latencyP95[serviceName])}</span>
           </div>
         </div>
       </SectionState>
@@ -151,35 +153,33 @@ export default function ServiceInspector({ serviceName, onClose }: Props) {
       </div>
 
       <div className="service-inspector-section">
-        <h3>Depends on ({outgoing.length})</h3>
+        <h3>Dependencies</h3>
+        <div className="inspector-row-label" style={{ marginBottom: "0.2rem" }}>Outgoing ({outgoing.length})</div>
         {outgoing.length === 0 ? (
-          <p className="state-message">No dependencies observed yet.</p>
+          <p className="state-message">None observed.</p>
         ) : (
           <ul className="service-inspector-edge-list">
             {outgoing.map((e) => (
               <li key={`${e.sourceService}-${e.targetService}`}>
                 <span>{e.targetService}</span>
                 <span className="cell-muted">
-                  {e.totalCalls} calls · {Math.round(e.confidence * 100)}% confidence
+                  {e.totalCalls} calls · {Math.round(e.confidence * 100)}%
                   {e.failedCalls > 0 && <span className="cell-elevated"> · {e.failedCalls} failed</span>}
                 </span>
               </li>
             ))}
           </ul>
         )}
-      </div>
-
-      <div className="service-inspector-section">
-        <h3>Depended on by ({incoming.length})</h3>
+        <div className="inspector-row-label" style={{ margin: "0.6rem 0 0.2rem" }}>Incoming ({incoming.length})</div>
         {incoming.length === 0 ? (
-          <p className="state-message">No dependencies observed yet.</p>
+          <p className="state-message">None observed.</p>
         ) : (
           <ul className="service-inspector-edge-list">
             {incoming.map((e) => (
               <li key={`${e.sourceService}-${e.targetService}`}>
                 <span>{e.sourceService}</span>
                 <span className="cell-muted">
-                  {e.totalCalls} calls · {Math.round(e.confidence * 100)}% confidence
+                  {e.totalCalls} calls · {Math.round(e.confidence * 100)}%
                   {e.failedCalls > 0 && <span className="cell-elevated"> · {e.failedCalls} failed</span>}
                 </span>
               </li>

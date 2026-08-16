@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   getCpuUsage,
-  getCpuUsageRange,
   getDependencyGraph,
   getErrorRate,
   getErrorRateRange,
@@ -21,6 +20,7 @@ import { useTimeWindow } from "../context/TimeWindowContext";
 import SystemStatus from "../components/SystemStatus";
 import RootCauseSummaryCard from "../components/RootCauseSummaryCard";
 import RecentEventsPanel from "../components/RecentEventsPanel";
+import DependencyGraphPanel from "../components/DependencyGraphPanel";
 import LineChart from "../components/charts/LineChart";
 import type { DependencyGraphResponse, RootCauseCandidate, ServiceEventRecord, ServiceHealthMap } from "../types";
 import type { RuntimeMetrics } from "../components/MetricsPanel";
@@ -40,7 +40,6 @@ export default function Overview() {
   const requestRateTrend = useFetchState<RangeSeries[]>();
   const errorRateTrend = useFetchState<RangeSeries[]>();
   const latencyTrend = useFetchState<RangeSeries[]>();
-  const cpuTrend = useFetchState<RangeSeries[]>();
   const [trendsUpdatedAt, setTrendsUpdatedAt] = useState<number | null>(null);
 
   usePolling(() => {
@@ -56,23 +55,15 @@ export default function Overview() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, POLL_INTERVAL_MS);
 
-  // Separate effect (not usePolling) so changing the time window re-fetches
-  // immediately instead of waiting for the next scheduled tick.
   useEffect(() => {
     let cancelled = false;
     function fetchTrends() {
-      Promise.all([
-        getRequestRateRange(timeWindow),
-        getErrorRateRange(timeWindow),
-        getLatencyP95Range(timeWindow),
-        getCpuUsageRange(timeWindow),
-      ])
-        .then(([rr, er, lat, cpu]) => {
+      Promise.all([getRequestRateRange(timeWindow), getErrorRateRange(timeWindow), getLatencyP95Range(timeWindow)])
+        .then(([rr, er, lat]) => {
           if (cancelled) return;
           requestRateTrend.run(Promise.resolve(rr));
           errorRateTrend.run(Promise.resolve(er));
           latencyTrend.run(Promise.resolve(lat));
-          cpuTrend.run(Promise.resolve(cpu));
           setTrendsUpdatedAt(Date.now());
         })
         .catch(() => {});
@@ -86,53 +77,60 @@ export default function Overview() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeWindow]);
 
-  const updatedLabel = trendsUpdatedAt ? `Updated ${Math.max(0, Math.round((Date.now() - trendsUpdatedAt) / 1000))}s ago` : "";
+  const updatedLabel = trendsUpdatedAt ? `${Math.max(0, Math.round((Date.now() - trendsUpdatedAt) / 1000))}s ago` : "";
+  const requestRateSamples = requestRateTrend.data?.[0]?.samples ?? [];
+  const requestRateNow = requestRateSamples.length > 0 ? requestRateSamples[requestRateSamples.length - 1].value : undefined;
 
   return (
     <div className="page">
       <div className="page-header">
         <h1>Overview</h1>
-        <p>Real-time monitoring and root-cause analysis for the CloudMicroserviceOps platform.</p>
       </div>
 
-      <SystemStatus health={health.data} graph={graph.data} events={events.data} rootCauses={rootCauses.data} />
-
-      <section className="panel">
-        <div className="panel-header-row">
-          <div>
-            <h2 className="section-title">Trends</h2>
-            <p className="section-subtitle">Aggregate across all monitored services, real Prometheus history for the selected chart window.</p>
-          </div>
-          {updatedLabel && <span className="last-updated">{updatedLabel}</span>}
-        </div>
-        <div className="trend-grid">
-          <div className="trend-card">
-            <h3>Request rate (all services)</h3>
-            <LineChart samples={requestRateTrend.data?.[0]?.samples ?? []} width={520} height={140} yFormat={(v) => `${v.toFixed(1)}/s`} />
-          </div>
-          <div className="trend-card">
-            <h3>Error rate (all services)</h3>
-            <LineChart samples={errorRateTrend.data?.[0]?.samples ?? []} width={520} height={140} yFormat={(v) => `${v.toFixed(2)}/s`} />
-          </div>
-          <div className="trend-card">
-            <h3>P95 latency (all services)</h3>
-            <LineChart samples={latencyTrend.data?.[0]?.samples ?? []} width={520} height={140} yFormat={(v) => `${(v * 1000).toFixed(0)}ms`} />
-          </div>
-          <div className="trend-card">
-            <h3>CPU (average, all services)</h3>
-            <LineChart samples={cpuTrend.data?.[0]?.samples ?? []} width={520} height={140} yFormat={(v) => `${(v * 100).toFixed(0)}%`} />
-          </div>
-        </div>
-      </section>
-
-      <RootCauseSummaryCard
-        candidates={rootCauses.data}
-        metrics={metrics.data}
+      <SystemStatus
+        health={health.data}
         graph={graph.data}
-        loading={rootCauses.loading}
-        error={rootCauses.error}
-        compact
+        errorRate={metrics.data?.errorRate ?? null}
+        latencyP95={metrics.data?.latencyP95 ?? null}
       />
+
+      <div className="command-grid">
+        <div className="command-grid-topology">
+          <DependencyGraphPanel graph={graph.data} loading={graph.loading} error={graph.error} />
+        </div>
+        <div className="command-grid-incident">
+          <RootCauseSummaryCard
+            candidates={rootCauses.data}
+            metrics={metrics.data}
+            graph={graph.data}
+            loading={rootCauses.loading}
+            error={rootCauses.error}
+            compact
+          />
+        </div>
+      </div>
+
+      <div className="dominant-chart">
+        <div className="dominant-chart-head">
+          <h2>Request rate — all services</h2>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "0.75rem" }}>
+            {updatedLabel && <span className="last-updated">{updatedLabel}</span>}
+            <span className="dominant-chart-value">{requestRateNow === undefined ? "—" : `${requestRateNow.toFixed(2)}/s`}</span>
+          </div>
+        </div>
+        <LineChart samples={requestRateSamples} width={1040} height={220} yFormat={(v) => `${v.toFixed(1)}/s`} />
+      </div>
+
+      <div className="trend-grid">
+        <div className="trend-card">
+          <h3>P95 latency</h3>
+          <LineChart samples={latencyTrend.data?.[0]?.samples ?? []} width={500} height={130} yFormat={(v) => `${(v * 1000).toFixed(0)}ms`} />
+        </div>
+        <div className="trend-card">
+          <h3>Error rate</h3>
+          <LineChart samples={errorRateTrend.data?.[0]?.samples ?? []} width={500} height={130} yFormat={(v) => `${v.toFixed(2)}/s`} />
+        </div>
+      </div>
 
       <RecentEventsPanel events={events.data ? events.data.slice(0, 6) : null} loading={events.loading} error={events.error} compact />
     </div>

@@ -15,7 +15,6 @@ export default function Topology() {
     <div className="page">
       <div className="page-header">
         <h1>Topology</h1>
-        <p>Interactive service dependency graph, inferred entirely from observed traffic.</p>
       </div>
       <DependencyGraphPanel graph={graph.data} loading={graph.loading} error={graph.error} />
     </div>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type WheelEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Maximize2, Minimize2, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
+import { ArrowRight, Maximize2, Minimize2, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
 import type { DependencyEdge, DependencyGraphResponse } from "../types";
 import SectionState from "./SectionState";
 import Tooltip from "./charts/Tooltip";
@@ -38,20 +38,23 @@ function computeLayers(graph: DependencyGraphResponse): string[][] {
   return layers;
 }
 
+// Left-to-right layout (layers = columns): fills a wide canvas far better
+// than a top-to-bottom chain does, and matches how real infra service maps
+// (Datadog, Docker Desktop) are conventionally read - left is upstream.
 const NODE_W = 150;
-const NODE_H = 46;
-const LAYER_GAP_Y = 96;
-const NODE_GAP_X = 48;
+const NODE_H = 44;
+const LAYER_GAP_X = 150;
+const NODE_GAP_Y = 32;
 
 function computePositions(layers: string[][]): Map<string, { x: number; y: number }> {
   const positions = new Map<string, { x: number; y: number }>();
-  const layerWidths = layers.map((l) => l.length * (NODE_W + NODE_GAP_X) - NODE_GAP_X);
-  const totalWidth = Math.max(...layerWidths, NODE_W);
+  const layerHeights = layers.map((l) => l.length * (NODE_H + NODE_GAP_Y) - NODE_GAP_Y);
+  const totalHeight = Math.max(...layerHeights, NODE_H);
   layers.forEach((layer, layerIndex) => {
-    const layerWidth = layer.length * (NODE_W + NODE_GAP_X) - NODE_GAP_X;
-    const startX = (totalWidth - layerWidth) / 2;
+    const layerHeight = layer.length * (NODE_H + NODE_GAP_Y) - NODE_GAP_Y;
+    const startY = (totalHeight - layerHeight) / 2;
     layer.forEach((nodeId, i) => {
-      positions.set(nodeId, { x: startX + i * (NODE_W + NODE_GAP_X), y: layerIndex * (NODE_H + LAYER_GAP_Y) });
+      positions.set(nodeId, { x: layerIndex * (NODE_W + LAYER_GAP_X), y: startY + i * (NODE_H + NODE_GAP_Y) });
     });
   });
   return positions;
@@ -89,11 +92,8 @@ export default function DependencyGraphPanel({ graph, loading, error }: Props) {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [hoverTarget, setHoverTarget] = useState<
-    | { kind: "node"; id: string; screenX: number; screenY: number }
-    | { kind: "edge"; edge: DependencyEdge; screenX: number; screenY: number }
-    | null
-  >(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [hoverEdge, setHoverEdge] = useState<{ edge: DependencyEdge; screenX: number; screenY: number } | null>(null);
   const isDragging = useRef(false);
   const dragOrigin = useRef({ x: 0, y: 0 });
   const panOrigin = useRef({ x: 0, y: 0 });
@@ -108,8 +108,13 @@ export default function DependencyGraphPanel({ graph, loading, error }: Props) {
 
   const layers = graph ? computeLayers(graph) : [];
   const positions = computePositions(layers);
-  const totalWidth = Math.max(...layers.map((l) => l.length * (NODE_W + NODE_GAP_X) - NODE_GAP_X), NODE_W, 1);
-  const totalHeight = layers.length > 0 ? layers.length * (NODE_H + LAYER_GAP_Y) - LAYER_GAP_Y + NODE_H : NODE_H;
+  const totalWidth = layers.length > 0 ? layers.length * (NODE_W + LAYER_GAP_X) - LAYER_GAP_X + NODE_W : NODE_W;
+  const totalHeight = Math.max(...layers.map((l) => l.length * (NODE_H + NODE_GAP_Y) - NODE_GAP_Y), NODE_H, 1);
+
+  // Canvas height follows actual content (clamped) instead of wasting a
+  // fixed tall box on a simple/narrow graph - avoids the "excessive empty
+  // space" a fixed-height letterboxed viewBox would otherwise produce.
+  const canvasHeight = Math.min(560, Math.max(220, totalHeight + 90));
 
   const baseViewBox = { x: -30, y: -30, w: totalWidth + 60, h: totalHeight + 60 };
   const viewBox = {
@@ -166,17 +171,13 @@ export default function DependencyGraphPanel({ graph, loading, error }: Props) {
     navigate(`/services/${encodeURIComponent(serviceName)}`, { state: { backgroundLocation: location } });
   }
 
+  const selectedStats = graph && selectedNodeId ? computeNodeStats(selectedNodeId, graph.edges) : null;
+
   return (
     <section className="panel topology-panel">
       <div className="topology-header">
-        <div>
-          <h2 className="section-title">Dependency Graph</h2>
-          <p className="section-subtitle">
-            Cumulative service topology inferred from all observed calls since startup - not a static
-            diagram, and not limited to the dashboard's live window.
-          </p>
-        </div>
-        <span className="topology-alltime-badge">All-time · not affected by chart window</span>
+        <h2 className="section-title">Topology</h2>
+        <span className="topology-alltime-badge">All-time</span>
       </div>
 
       <SectionState
@@ -187,25 +188,30 @@ export default function DependencyGraphPanel({ graph, loading, error }: Props) {
         skeletonRows={4}
       >
         {graph && (
-          <div className={`topology-canvas${isFullscreen ? " is-fullscreen" : ""}`} ref={containerRef}>
+          <div
+            className={`topology-canvas${isFullscreen ? " is-fullscreen" : ""}`}
+            ref={containerRef}
+            style={isFullscreen ? undefined : { height: canvasHeight, minHeight: canvasHeight }}
+          >
             <div className="topology-toolbar">
               <button type="button" title="Zoom in" onClick={() => setZoom((z) => clamp(z + 0.2, MIN_ZOOM, MAX_ZOOM))}>
-                <ZoomIn size={15} />
+                <ZoomIn size={14} />
               </button>
               <button type="button" title="Zoom out" onClick={() => setZoom((z) => clamp(z - 0.2, MIN_ZOOM, MAX_ZOOM))}>
-                <ZoomOut size={15} />
+                <ZoomOut size={14} />
               </button>
               <button type="button" title="Reset view" onClick={resetView}>
-                <RotateCcw size={15} />
+                <RotateCcw size={14} />
               </button>
               <button type="button" title={isFullscreen ? "Exit fullscreen" : "Fullscreen"} onClick={toggleFullscreen}>
-                {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+                {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
               </button>
             </div>
 
             <svg
               ref={svgRef}
               className="topology-svg"
+              style={isFullscreen ? undefined : { height: canvasHeight }}
               viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
               onWheel={handleWheel}
               onMouseDown={handleMouseDown}
@@ -226,24 +232,43 @@ export default function DependencyGraphPanel({ graph, loading, error }: Props) {
                 const from = positions.get(edge.sourceService);
                 const to = positions.get(edge.targetService);
                 if (!from || !to) return null;
-                const x1 = from.x + NODE_W / 2;
-                const y1 = from.y + NODE_H;
-                const x2 = to.x + NODE_W / 2;
-                const y2 = to.y;
+                const x1 = from.x + NODE_W;
+                const y1 = from.y + NODE_H / 2;
+                const x2 = to.x;
+                const y2 = to.y + NODE_H / 2;
+                const midX = (x1 + x2) / 2;
                 const midY = (y1 + y2) / 2;
                 const hasFailures = edge.failedCalls > 0;
+                const labelText = hasFailures
+                  ? `${edge.totalCalls} · ${edge.failedCalls} failed`
+                  : `${edge.totalCalls} · ${Math.round(edge.confidence * 100)}%`;
                 return (
                   <g
                     key={`${edge.sourceService}->${edge.targetService}`}
-                    onMouseEnter={(e) => setHoverTarget({ kind: "edge", edge, screenX: e.clientX, screenY: e.clientY })}
-                    onMouseMove={(e) => setHoverTarget({ kind: "edge", edge, screenX: e.clientX, screenY: e.clientY })}
-                    onMouseLeave={() => setHoverTarget(null)}
+                    onMouseEnter={(e) => setHoverEdge({ edge, screenX: e.clientX, screenY: e.clientY })}
+                    onMouseMove={(e) => setHoverEdge({ edge, screenX: e.clientX, screenY: e.clientY })}
+                    onMouseLeave={() => setHoverEdge(null)}
                   >
                     <path
-                      d={`M${x1},${y1} C${x1},${midY} ${x2},${midY} ${x2},${y2}`}
+                      d={`M${x1},${y1} C${midX},${y1} ${midX},${y2} ${x2},${y2}`}
                       className={`topology-edge${hasFailures ? " has-failures" : ""}`}
                       markerEnd={`url(#${hasFailures ? "topology-arrow-failed" : "topology-arrow"})`}
                     />
+                    <rect
+                      x={midX - labelText.length * 2.6}
+                      y={midY - 15}
+                      width={labelText.length * 5.2}
+                      height={12}
+                      className="topology-edge-label-bg"
+                    />
+                    <text
+                      x={midX}
+                      y={midY - 6}
+                      textAnchor="middle"
+                      className={`topology-edge-label${hasFailures ? " has-failures" : ""}`}
+                    >
+                      {labelText}
+                    </text>
                   </g>
                 );
               })}
@@ -251,21 +276,19 @@ export default function DependencyGraphPanel({ graph, loading, error }: Props) {
               {[...positions.entries()].map(([nodeId, pos]) => {
                 const stats = computeNodeStats(nodeId, graph.edges);
                 const degraded = stats.failedIn > 0;
+                const selected = nodeId === selectedNodeId;
                 return (
                   <g
                     key={nodeId}
                     transform={`translate(${pos.x},${pos.y})`}
                     className="topology-node-group"
-                    onMouseEnter={(e) => setHoverTarget({ kind: "node", id: nodeId, screenX: e.clientX, screenY: e.clientY })}
-                    onMouseMove={(e) => setHoverTarget({ kind: "node", id: nodeId, screenX: e.clientX, screenY: e.clientY })}
-                    onMouseLeave={() => setHoverTarget(null)}
-                    onClick={() => openInspector(nodeId)}
+                    onClick={() => setSelectedNodeId((prev) => (prev === nodeId ? null : nodeId))}
                   >
                     <rect
                       width={NODE_W}
                       height={NODE_H}
-                      rx={8}
-                      className={`topology-node-rect${degraded ? " degraded" : ""}`}
+                      rx={2}
+                      className={`topology-node-rect${degraded ? " degraded" : ""}${selected ? " selected" : ""}`}
                     />
                     <text x={NODE_W / 2} y={NODE_H / 2 + 5} textAnchor="middle" className="topology-node-label">
                       {nodeId}
@@ -277,34 +300,48 @@ export default function DependencyGraphPanel({ graph, loading, error }: Props) {
           </div>
         )}
 
-        {hoverTarget && hoverTarget.kind === "edge" && (
-          <Tooltip x={hoverTarget.screenX} y={hoverTarget.screenY}>
-            <div className="chart-tooltip-time">
-              {hoverTarget.edge.sourceService} &rarr; {hoverTarget.edge.targetService}
+        {selectedStats && selectedNodeId && (
+          <div className="topology-selected-panel">
+            <span className="topology-selected-name">{selectedNodeId}</span>
+            <div className="topology-selected-stat">
+              <span className="topology-selected-stat-label">In / Out</span>
+              <span>
+                {selectedStats.incomingCount} / {selectedStats.outgoingCount} deps
+              </span>
             </div>
-            <div>{hoverTarget.edge.totalCalls} total calls</div>
-            <div>{hoverTarget.edge.successfulCalls} successful</div>
-            <div>{hoverTarget.edge.failedCalls} failed</div>
-            <div>{Math.round(hoverTarget.edge.confidence * 100)}% confidence</div>
-            {hoverTarget.edge.lastObservedAt && (
-              <div className="chart-tooltip-muted">Last observed {new Date(hoverTarget.edge.lastObservedAt).toLocaleTimeString()}</div>
+            <div className="topology-selected-stat">
+              <span className="topology-selected-stat-label">Calls</span>
+              <span>
+                {selectedStats.totalIn} in, {selectedStats.totalOut} out
+              </span>
+            </div>
+            {selectedStats.failedIn > 0 && (
+              <div className="topology-selected-stat">
+                <span className="topology-selected-stat-label">Failed</span>
+                <span style={{ color: "var(--critical)" }}>{selectedStats.failedIn} inbound</span>
+              </div>
             )}
-          </Tooltip>
+            <button
+              type="button"
+              className="panel-header-link"
+              style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.3rem" }}
+              onClick={() => openInspector(selectedNodeId)}
+            >
+              Inspect <ArrowRight size={12} />
+            </button>
+          </div>
         )}
-        {hoverTarget && hoverTarget.kind === "node" && graph && (
-          <Tooltip x={hoverTarget.screenX} y={hoverTarget.screenY}>
-            {(() => {
-              const stats = computeNodeStats(hoverTarget.id, graph.edges);
-              return (
-                <>
-                  <div className="chart-tooltip-time">{hoverTarget.id}</div>
-                  <div>{stats.incomingCount} incoming / {stats.outgoingCount} outgoing dependencies</div>
-                  <div>{stats.totalIn} calls in, {stats.totalOut} calls out</div>
-                  {stats.failedIn > 0 && <div className="chart-tooltip-critical">{stats.failedIn} failed inbound calls</div>}
-                  <div className="chart-tooltip-muted">Click to inspect</div>
-                </>
-              );
-            })()}
+
+        {hoverEdge && (
+          <Tooltip x={hoverEdge.screenX} y={hoverEdge.screenY}>
+            <div className="chart-tooltip-time">
+              {hoverEdge.edge.sourceService} &rarr; {hoverEdge.edge.targetService}
+            </div>
+            <div>{hoverEdge.edge.totalCalls} total &middot; {hoverEdge.edge.successfulCalls} ok &middot; {hoverEdge.edge.failedCalls} failed</div>
+            <div>{Math.round(hoverEdge.edge.confidence * 100)}% confidence</div>
+            {hoverEdge.edge.lastObservedAt && (
+              <div className="chart-tooltip-muted">{new Date(hoverEdge.edge.lastObservedAt).toLocaleTimeString()}</div>
+            )}
           </Tooltip>
         )}
       </SectionState>

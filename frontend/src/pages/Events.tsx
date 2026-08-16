@@ -42,7 +42,7 @@ export default function Events() {
     <div className="page">
       <div className="page-header">
         <h1>Events</h1>
-        <p>Operational event stream. Filters apply to the last 50 events - the API does not support server-side search.</p>
+        <p>Last 50, filtered client-side</p>
       </div>
 
       <div className="events-filters">

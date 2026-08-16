@@ -1,55 +1,56 @@
-import type { DependencyGraphResponse, RootCauseCandidate, ServiceEventRecord, ServiceHealthMap } from "../types";
-import { LIVE_WINDOW_MINUTES, MONITORED_SERVICES } from "../services/api";
-import StatCard from "./StatCard";
+import type { DependencyGraphResponse, ServiceHealthMap, ServiceMetrics } from "../types";
+import { MONITORED_SERVICES } from "../services/api";
 
 interface Props {
   health: ServiceHealthMap | null;
   graph: DependencyGraphResponse | null;
-  events: ServiceEventRecord[] | null;
-  rootCauses: RootCauseCandidate[] | null;
+  errorRate: ServiceMetrics | null;
+  latencyP95: ServiceMetrics | null;
 }
 
-const LIVE_WINDOW_MS = LIVE_WINDOW_MINUTES * 60_000;
+function sum(values: ServiceMetrics | null): number | undefined {
+  if (!values) return undefined;
+  const nums = MONITORED_SERVICES.map((s) => values[s]).filter((v): v is number => v !== undefined);
+  if (nums.length === 0) return undefined;
+  return nums.reduce((a, b) => a + b, 0);
+}
 
-export default function SystemStatus({ health, graph, events, rootCauses }: Props) {
+function avg(values: ServiceMetrics | null): number | undefined {
+  if (!values) return undefined;
+  const nums = MONITORED_SERVICES.map((s) => values[s]).filter((v): v is number => v !== undefined);
+  if (nums.length === 0) return undefined;
+  return nums.reduce((a, b) => a + b, 0) / nums.length;
+}
+
+export default function SystemStatus({ health, graph, errorRate, latencyP95 }: Props) {
   const upCount = health ? MONITORED_SERVICES.filter((s) => health[s]).length : null;
-  // Only count failures inside the same live window RCA is scored against -
-  // an old FAILURE row must not inflate this into looking like an active incident.
-  const failureCount =
-    events?.filter((e) => e.status === "FAILURE" && Date.now() - new Date(e.timestamp).getTime() <= LIVE_WINDOW_MS)
-      .length ?? null;
-  const topCause = rootCauses && rootCauses.length > 0 ? rootCauses[0].service : "None";
+  const totalErrorRate = sum(errorRate);
+  const avgP95 = avg(latencyP95);
 
   return (
-    <div className="stat-grid">
-      <StatCard
-        label="Services"
-        value={upCount === null ? "—" : `${upCount}/${MONITORED_SERVICES.length}`}
-        detail="reporting up"
-        tone={upCount === null ? "default" : upCount === MONITORED_SERVICES.length ? "good" : "critical"}
-      />
-      <StatCard
-        label="Active Dependencies"
-        value={graph ? String(graph.edges.length) : "—"}
-        detail="observed edges (all-time)"
-        tone="accent"
-      />
-      <StatCard
-        label="Recent Failures"
-        value={failureCount === null ? "—" : String(failureCount)}
-        detail={`in last ${LIVE_WINDOW_MINUTES} min`}
-        tone={failureCount === null ? "default" : failureCount > 0 ? "warning" : "good"}
-      />
-      <StatCard
-        label="Current Root Cause"
-        value={rootCauses ? topCause : "—"}
-        detail={
-          rootCauses && rootCauses.length > 0
-            ? `score ${rootCauses[0].score.toFixed(2)}`
-            : `no incident (last ${LIVE_WINDOW_MINUTES} min)`
-        }
-        tone={rootCauses && rootCauses.length > 0 ? "critical" : "default"}
-      />
+    <div className="summary-row">
+      <div className="summary-item">
+        <span className="summary-label">Services</span>
+        <span className="summary-value">{upCount === null ? "—" : `${upCount}/${MONITORED_SERVICES.length}`}</span>
+        <span className="summary-detail">reporting up</span>
+      </div>
+      <div className="summary-item">
+        <span className="summary-label">Dependencies</span>
+        <span className="summary-value">{graph ? graph.edges.length : "—"}</span>
+        <span className="summary-detail">observed, all-time</span>
+      </div>
+      <div className={`summary-item${totalErrorRate !== undefined && totalErrorRate > 0 ? " tone-critical" : ""}`}>
+        <span className="summary-label">Error Rate</span>
+        <span className={`summary-value${totalErrorRate !== undefined && totalErrorRate > 0 ? " tone-critical" : ""}`}>
+          {totalErrorRate === undefined ? "—" : `${totalErrorRate.toFixed(2)}/s`}
+        </span>
+        <span className="summary-detail">sum, all services</span>
+      </div>
+      <div className="summary-item">
+        <span className="summary-label">P95</span>
+        <span className="summary-value">{avgP95 === undefined ? "—" : `${(avgP95 * 1000).toFixed(0)}ms`}</span>
+        <span className="summary-detail">average, all services</span>
+      </div>
     </div>
   );
 }
