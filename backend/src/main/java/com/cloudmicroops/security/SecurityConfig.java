@@ -40,7 +40,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/prometheus").permitAll()
-                        .requestMatchers("/api/dependencies/**", "/api/events/**", "/api/incidents/**")
+                        .requestMatchers("/api/dependencies/**", "/api/events/**", "/api/incidents/**",
+                                "/api/reports/**", "/api/notifications/**")
                         .hasRole("VIEWER")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

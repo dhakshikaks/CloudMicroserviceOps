@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import {
   Activity,
   AlertTriangle,
+  Download,
+  FileText,
   HeartPulse,
   LayoutDashboard,
   LineChart,
@@ -20,7 +22,7 @@ interface Props {
 interface PaletteItem {
   id: string;
   label: string;
-  group: "Navigation" | "Service" | "Incident";
+  group: "Navigation" | "Service" | "Incident" | "Reports";
   icon: LucideIcon;
   to: string;
 }
@@ -33,6 +35,12 @@ const NAV_ITEMS: PaletteItem[] = [
   { id: "nav-events", label: "Events", group: "Navigation", icon: Activity, to: "/events" },
   { id: "nav-incidents", label: "Incidents / Root Cause", group: "Navigation", icon: AlertTriangle, to: "/incidents" },
   { id: "nav-health", label: "System Health", group: "Navigation", icon: HeartPulse, to: "/system/health" },
+];
+
+const REPORT_ITEMS: PaletteItem[] = [
+  { id: "reports-center", label: "Report Center", group: "Reports", icon: FileText, to: "/reports" },
+  { id: "reports-generate-incident", label: "Generate Incident Report", group: "Reports", icon: FileText, to: "/reports" },
+  { id: "reports-export", label: "Export current view", group: "Reports", icon: Download, to: "/reports" },
 ];
 
 export default function CommandPalette({ isOpen, onClose }: Props) {
@@ -71,7 +79,7 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
           },
         ]
       : [];
-    return [...incidentItem, ...NAV_ITEMS, ...serviceItems];
+    return [...incidentItem, ...NAV_ITEMS, ...REPORT_ITEMS, ...serviceItems];
   }, [activeIncidentService]);
 
   const filtered = useMemo(() => {
@@ -118,13 +126,13 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
         <input
           autoFocus
           className="command-palette-input"
-          placeholder="Search services, topology, incidents, events..."
+          placeholder="Search services, topology, incidents, events, reports..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
         <div className="command-palette-list">
           {filtered.length === 0 && <div className="command-palette-empty">No matches.</div>}
-          {(["Incident", "Navigation", "Service"] as const).map((group) => {
+          {(["Incident", "Navigation", "Reports", "Service"] as const).map((group) => {
             const groupItems = filtered.filter((item) => item.group === group);
             if (groupItems.length === 0) return null;
             return (

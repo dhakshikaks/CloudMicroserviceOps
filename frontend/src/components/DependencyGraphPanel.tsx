@@ -48,10 +48,10 @@ function computeLayers(graph: DependencyGraphResponse): string[][] {
 // (Datadog, Docker Desktop) are conventionally read - left is upstream.
 // Nodes are deliberately large, information-dense cards - the topology is
 // this product's hero visual, not a decorative diagram.
-const NODE_W = 224;
-const NODE_H = 104;
-const LAYER_GAP_X = 130;
-const NODE_GAP_Y = 48;
+const NODE_W = 260;
+const NODE_H = 140;
+const LAYER_GAP_X = 150;
+const NODE_GAP_Y = 56;
 
 function computePositions(layers: string[][]): Map<string, { x: number; y: number }> {
   const positions = new Map<string, { x: number; y: number }>();
@@ -145,7 +145,7 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
   // margin regardless of container size. Vertical padding is kept tight so
   // the node row itself dominates the canvas rather than floating in empty
   // black space above and below it.
-  const canvasHeight = Math.min(460, Math.max(minCanvasHeight ?? 140, totalHeight + 34));
+  const canvasHeight = Math.min(680, Math.max(minCanvasHeight ?? 180, totalHeight + 34));
 
   const baseViewBox = { x: -30, y: -17, w: totalWidth + 60, h: totalHeight + 34 };
   const viewBox = {
@@ -257,6 +257,10 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
                 <marker id="topology-arrow-failed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
                   <path d="M0,0 L10,5 L0,10 z" className="topology-arrowhead failed" />
                 </marker>
+                <pattern id="topology-hatch-pattern" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+                  <rect width="8" height="8" fill="transparent" />
+                  <line x1="0" y1="0" x2="0" y2="8" stroke="rgba(0,0,0,0.14)" strokeWidth="3" />
+                </pattern>
               </defs>
 
               {graph.edges.map((edge) => {
@@ -325,6 +329,7 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
                 const degraded = stats.failedIn > 0;
                 const selected = nodeId === selectedNodeId;
                 const cpu = metrics?.cpu[nodeId];
+                const memory = metrics?.memory[nodeId];
                 const requestRate = metrics?.requestRate[nodeId];
                 const errorRate = metrics?.errorRate[nodeId];
                 const p95 = metrics?.latencyP95[nodeId];
@@ -347,6 +352,7 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
                       rx={2}
                       className={`topology-node-rect${degraded ? " degraded" : ""}${selected ? " selected" : ""}`}
                     />
+                    {degraded && <rect width={NODE_W} height={NODE_H} rx={2} className="topology-node-hatch" />}
                     <circle cx={16} cy={20} r={4} className={`topology-node-dot ${toneClass}`} />
                     <text x={28} y={24} className="topology-node-name mono">
                       {nodeId.toUpperCase()}
@@ -361,14 +367,22 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
                     <text x={NODE_W - 14} y={58} textAnchor="end" className="topology-node-metric mono">
                       P95 {fmtMs(p95)}
                     </text>
-                    <text x={14} y={78} className={`topology-node-metric mono${hasErrorSignal ? " critical" : ""}`}>
+                    <text x={14} y={80} className={`topology-node-metric mono${hasErrorSignal ? " critical" : ""}`}>
                       ERR {fmtErrPct(errorRate, requestRate)}
                     </text>
-                    <text x={NODE_W - 14} y={78} textAnchor="end" className="topology-node-metric mono">
+                    <text x={NODE_W - 14} y={80} textAnchor="end" className="topology-node-metric mono">
                       CPU {fmtPercent(cpu)}
                     </text>
+                    <text x={14} y={102} className="topology-node-metric mono">
+                      MEM {fmtMb(memory)}
+                    </text>
                     {degraded && (
-                      <text x={14} y={96} className="topology-node-metric mono critical">
+                      <text x={NODE_W - 14} y={102} textAnchor="end" className="topology-node-metric mono critical">
+                        {stats.failedIn} FAILED
+                      </text>
+                    )}
+                    {degraded && (
+                      <text x={14} y={124} className="topology-node-metric mono critical">
                         {stats.failedIn} FAILED (inbound)
                       </text>
                     )}
@@ -397,7 +411,7 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
             {selectedStats.failedIn > 0 && (
               <div className="topology-selected-stat">
                 <span className="topology-selected-stat-label">Failed</span>
-                <span className="mono" style={{ color: "var(--critical)" }}>{selectedStats.failedIn} inbound</span>
+                <span className="mono" style={{ fontWeight: 800 }}>{selectedStats.failedIn} inbound</span>
               </div>
             )}
             <button

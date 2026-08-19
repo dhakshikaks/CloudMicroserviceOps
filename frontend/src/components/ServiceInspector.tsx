@@ -2,7 +2,7 @@ import { RefreshCw, X } from "lucide-react";
 import { useServiceInspectorData } from "../hooks/useServiceInspectorData";
 import StatusBadge from "./StatusBadge";
 import SectionState from "./SectionState";
-import Sparkline from "./charts/Sparkline";
+import LineChart from "./charts/LineChart";
 
 interface Props {
   serviceName: string;
@@ -25,13 +25,23 @@ function fmtMs(v: number | undefined): string {
 export default function ServiceInspector({ serviceName, onClose }: Props) {
   const d = useServiceInspectorData(serviceName);
 
+  const totalActivity = d.recentActivity.length;
+  const failureCount = d.recentActivity.filter((e) => e.status === "FAILURE").length;
+  const availabilityPct = totalActivity > 0 ? ((totalActivity - failureCount) / totalActivity) * 100 : undefined;
+  const maxLatencyInWindow = d.latencySamples.length > 0 ? Math.max(...d.latencySamples.map((s) => s.value)) : undefined;
+  const latencyAnomaly =
+    maxLatencyInWindow !== undefined && d.latencyP95 !== undefined && maxLatencyInWindow > d.latencyP95 * 1.5;
+
   return (
     <div className="service-inspector">
       <div className="service-inspector-head">
         <div>
           <span className="service-inspector-eyebrow">Service</span>
           <div className="service-inspector-name">{serviceName}</div>
-          <StatusBadge status={d.status} />
+          <span className="service-inspector-id mono">SERVICE ID · job/{serviceName}</span>
+          <div style={{ marginTop: "0.5rem" }}>
+            <StatusBadge status={d.status} />
+          </div>
         </div>
         <div className="service-inspector-actions">
           <button type="button" title="Refresh" onClick={d.refresh}>
@@ -45,7 +55,7 @@ export default function ServiceInspector({ serviceName, onClose }: Props) {
 
       <SectionState loading={d.loading} error={d.error} empty={false} skeletonRows={3}>
         <div className="service-inspector-section">
-          <h3>Metrics</h3>
+          <h3>Runtime</h3>
           <div className="inspector-row">
             <span className="inspector-row-label">CPU</span>
             <span className="inspector-row-value">{fmtPercent(d.cpu)}</span>
@@ -60,7 +70,7 @@ export default function ServiceInspector({ serviceName, onClose }: Props) {
           </div>
           <div className="inspector-row">
             <span className="inspector-row-label">Error rate</span>
-            <span className="inspector-row-value">{fmtRate(d.errorRate)}</span>
+            <span className={`inspector-row-value${(d.errorRate ?? 0) > 0 ? " is-elevated" : ""}`}>{fmtRate(d.errorRate)}</span>
           </div>
           <div className="inspector-row">
             <span className="inspector-row-label">P95 latency</span>
@@ -70,12 +80,47 @@ export default function ServiceInspector({ serviceName, onClose }: Props) {
       </SectionState>
 
       <div className="service-inspector-section">
-        <h3>Error rate (last 15 min)</h3>
-        <Sparkline samples={d.errorSamples} width={280} height={44} tone={d.errorSamples.some((s) => s.value > 0) ? "critical" : "default"} />
+        <h3>Traffic — request rate (last 15 min)</h3>
+        <LineChart samples={d.requestRateSamples} width={340} height={110} yFormat={(v) => `${v.toFixed(1)}/s`} />
       </div>
       <div className="service-inspector-section">
-        <h3>P95 latency (last 15 min)</h3>
-        <Sparkline samples={d.latencySamples} width={280} height={44} />
+        <h3>Traffic — error rate (last 15 min)</h3>
+        <LineChart
+          samples={d.errorSamples}
+          width={340}
+          height={110}
+          yFormat={(v) => `${v.toFixed(2)}/s`}
+          tone={d.errorSamples.some((s) => s.value > 0) ? "critical" : "default"}
+        />
+      </div>
+      <div className="service-inspector-section">
+        <h3>Traffic — P95 latency (last 15 min)</h3>
+        <LineChart samples={d.latencySamples} width={340} height={110} yFormat={(v) => `${(v * 1000).toFixed(0)}ms`} />
+      </div>
+
+      <div className="service-inspector-section">
+        <h3>Health history — last 15 min</h3>
+        <div className="health-history-grid">
+          <div className="health-history-cell">
+            <span className="inspector-row-label">Availability</span>
+            <span className="inspector-row-value">{availabilityPct === undefined ? "—" : `${availabilityPct.toFixed(1)}%`}</span>
+          </div>
+          <div className="health-history-cell">
+            <span className="inspector-row-label">Failures observed</span>
+            <span className={`inspector-row-value${failureCount > 0 ? " is-elevated" : ""}`}>{failureCount}</span>
+          </div>
+          <div className="health-history-cell">
+            <span className="inspector-row-label">Latency anomaly</span>
+            <span className="inspector-row-value">{latencyAnomaly ? "YES" : "None"}</span>
+          </div>
+        </div>
+        <p className="health-history-note">
+          {totalActivity === 0
+            ? "No inbound or outbound events observed for this service in the current window."
+            : `${totalActivity} events observed; ${failureCount} failed (${availabilityPct?.toFixed(1)}% availability).`}
+          {latencyAnomaly &&
+            ` P95 latency spiked to ${fmtMs(maxLatencyInWindow)} at least once in this window, above its current ${fmtMs(d.latencyP95)} reading.`}
+        </p>
       </div>
 
       <div className="service-inspector-section">

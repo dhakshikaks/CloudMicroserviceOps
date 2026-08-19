@@ -94,10 +94,13 @@ export default function Overview() {
         latencyP95={metrics.data?.latencyP95 ?? null}
       />
 
-      <div className="command-grid">
-        <div className="command-grid-topology">
-          <DependencyGraphPanel graph={graph.data} loading={graph.loading} error={graph.error} metrics={metrics.data} />
-        </div>
+      <div className="overview-section overview-topology-section">
+        <h2 className="section-title">Topology — live call graph</h2>
+        <DependencyGraphPanel graph={graph.data} loading={graph.loading} error={graph.error} metrics={metrics.data} />
+      </div>
+
+      <div className="overview-section">
+        <h2 className="section-title">Root cause</h2>
         <div className="command-grid-incident">
           <RootCauseSummaryCard
             candidates={rootCauses.data}

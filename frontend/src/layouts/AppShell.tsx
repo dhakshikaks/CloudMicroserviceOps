@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Outlet, useNavigate } from "react-router-dom";
+import { Bell, Download, Search } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import CommandPalette from "../components/CommandPalette";
+import NotificationDrawer from "../components/NotificationDrawer";
+import { NotificationsProvider, useNotifications } from "../context/NotificationsContext";
 import { useTimeWindow } from "../context/TimeWindowContext";
 import { TIME_WINDOWS } from "../services/api";
 
-export default function AppShell() {
+function AppShellInner() {
   const { timeWindow, setTimeWindow } = useTimeWindow();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const { unreadCount } = useNotifications();
+  const navigate = useNavigate();
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -50,12 +55,28 @@ export default function AppShell() {
             <span>Search</span>
             <kbd>⌘K</kbd>
           </button>
+          <button type="button" className="topbar-icon-btn" title="Export current view" onClick={() => navigate("/reports")}>
+            <Download size={15} />
+          </button>
+          <button type="button" className="topbar-icon-btn" title="Notifications" onClick={() => setNotifOpen(true)}>
+            <Bell size={15} />
+            {unreadCount > 0 && <span className="badge-count mono">{unreadCount > 99 ? "99+" : unreadCount}</span>}
+          </button>
         </header>
         <main className="app-main">
           <Outlet />
         </main>
       </div>
       <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <NotificationDrawer isOpen={notifOpen} onClose={() => setNotifOpen(false)} />
     </div>
+  );
+}
+
+export default function AppShell() {
+  return (
+    <NotificationsProvider>
+      <AppShellInner />
+    </NotificationsProvider>
   );
 }

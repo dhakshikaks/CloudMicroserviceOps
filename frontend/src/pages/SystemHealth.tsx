@@ -5,6 +5,7 @@ import { useFetchState } from "../hooks/useFetchState";
 import { usePolling } from "../hooks/usePolling";
 import StatusBadge from "../components/StatusBadge";
 import SectionState from "../components/SectionState";
+import MetricExplainer from "../components/MetricExplainer";
 import type { ServiceHealthMap } from "../types";
 
 const POLL_INTERVAL_MS = 7000;
@@ -44,7 +45,7 @@ export default function SystemHealth() {
 
       <section className="panel">
         <h2 className="section-title">Service status</h2>
-        <SectionState loading={health.loading} error={health.error} empty={!health.data}>
+        <SectionState loading={health.loading} error={health.error} empty={!health.data} dataSource="Prometheus">
           <div className="health-status-board">
             {MONITORED_SERVICES.map((service) => {
               const up = health.data?.[service];
@@ -57,6 +58,11 @@ export default function SystemHealth() {
               );
             })}
           </div>
+          <MetricExplainer
+            text="Each service reports UP when Prometheus last scraped it successfully; DOWN means the most recent scrape failed or returned no target."
+            source="Prometheus"
+            windowLabel="live"
+          />
         </SectionState>
       </section>
 

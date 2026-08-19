@@ -21,6 +21,25 @@ import type { RuntimeMetrics } from "../components/MetricsPanel";
 const POLL_INTERVAL_MS = 7000;
 const EXPLORE_WINDOWS = [5, 15, 30, 60, 180, 360];
 
+/** Full forward transitive closure from root, purely from real observed edges. */
+function computeTransitiveDownstream(root: string, edges: DependencyEdge[]): string[] {
+  const visited = new Set<string>([root]);
+  const queue = [root];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    edges
+      .filter((e) => e.sourceService === current)
+      .forEach((e) => {
+        if (!visited.has(e.targetService)) {
+          visited.add(e.targetService);
+          queue.push(e.targetService);
+        }
+      });
+  }
+  visited.delete(root);
+  return [...visited];
+}
+
 /** Real upstream/downstream traversal through the observed graph, from the root-cause service outward. */
 function buildDependencyPath(root: string, edges: DependencyEdge[]): string[] {
   const path: string[] = [root];
@@ -106,6 +125,28 @@ export default function Incidents() {
   const incidentId = triggeringEvent?.eventId.slice(0, 8).toUpperCase();
   const failureCount = timeline.filter((e) => e.status === "FAILURE").length;
 
+  const detectionTime = triggeringEvent ? new Date(triggeringEvent.timestamp) : null;
+  const durationMinutes = detectionTime ? Math.max(0, Math.round((Date.now() - detectionTime.getTime()) / 60000)) : null;
+
+  const transitiveDownstream = top && graph.data ? computeTransitiveDownstream(top.service, graph.data.edges) : [];
+  const potentiallyAffected = top
+    ? transitiveDownstream.filter((s) => !top.affectedDownstreamServices.includes(s))
+    : [];
+
+  const errorRateForTop = top ? metrics.data?.errorRate[top.service] : undefined;
+  const latencyForTop = top ? metrics.data?.latencyP95[top.service] : undefined;
+  const evidenceItems: string[] = top
+    ? [
+        `${failureCount} failure event${failureCount === 1 ? "" : "s"} observed targeting ${top.service} in the last ${LIVE_WINDOW_MINUTES} minutes.`,
+        top.affectedDownstreamServices.length > 0
+          ? `${top.affectedDownstreamServices.length} downstream service${top.affectedDownstreamServices.length === 1 ? "" : "s"} affected: ${top.affectedDownstreamServices.join(", ")}.`
+          : "No downstream services currently show propagated failures.",
+        `Root-cause scorer reasoning: ${top.reason}`,
+        errorRateForTop !== undefined ? `Current error rate for ${top.service}: ${fmtRate(errorRateForTop)}.` : null,
+        latencyForTop !== undefined ? `Current P95 latency for ${top.service}: ${fmtMs(latencyForTop)}.` : null,
+      ].filter((x): x is string => x !== null)
+    : [];
+
   return (
     <div className="page">
       <div className="page-header">
@@ -135,34 +176,85 @@ export default function Incidents() {
               <span className="incident-header-label">Incident</span>
               {incidentId && <span className="incident-header-id">#{incidentId}</span>}
               <span className="incident-header-service">{top.service}</span>
+              <span className="cell-muted">
+                {top.affectedDownstreamServices.length > 0
+                  ? `propagating to ${top.affectedDownstreamServices.length} downstream service${top.affectedDownstreamServices.length === 1 ? "" : "s"}`
+                  : "no downstream propagation observed"}
+              </span>
             </div>
 
             <div className="incident-meta-row">
               <div className="incident-meta-item">
-                <span className="summary-label">Root cause</span>
+                <span className="summary-label">Detected</span>
                 <div className="summary-value" style={{ fontSize: "1.05rem" }}>
-                  {top.service}
+                  {detectionTime ? detectionTime.toLocaleTimeString() : "—"}
                 </div>
               </div>
               <div className="incident-meta-item">
-                <span className="summary-label">Confidence</span>
+                <span className="summary-label">Duration</span>
                 <div className="summary-value" style={{ fontSize: "1.05rem" }}>
-                  {top.score.toFixed(2)}
-                </div>
-              </div>
-              <div className="incident-meta-item">
-                <span className="summary-label">Impact</span>
-                <div className="summary-value" style={{ fontSize: "1.05rem" }}>
-                  {top.affectedDownstreamServices.length > 0 ? top.affectedDownstreamServices.join(", ") : "none"}
+                  {durationMinutes === null ? "—" : `${durationMinutes}m`}
                 </div>
               </div>
               <div className="incident-meta-item">
                 <span className="summary-label">Failures ({LIVE_WINDOW_MINUTES}m)</span>
-                <div className="summary-value tone-critical" style={{ fontSize: "1.05rem" }}>
+                <div className="summary-value" style={{ fontSize: "1.05rem", fontWeight: 800 }}>
                   {failureCount}
                 </div>
               </div>
+              <div className="incident-meta-item">
+                <span className="summary-label">Affected services</span>
+                <div className="summary-value" style={{ fontSize: "1.05rem" }}>
+                  {top.affectedDownstreamServices.length + 1}
+                </div>
+              </div>
             </div>
+
+            <section className="incident-why">
+              <div className="incident-why-label">Why {top.service}?</div>
+              <p className="incident-why-body">{top.reason}</p>
+              <div className="incident-confidence">
+                <span className="incident-confidence-label">Confidence</span>
+                <span className="incident-confidence-value">{(top.score * 100).toFixed(0)}%</span>
+              </div>
+              <ol className="rca-evidence-list" style={{ marginTop: "0.8rem" }}>
+                {evidenceItems.map((item) => (
+                  <li key={item} style={{ color: "var(--text-secondary)", paddingLeft: "1.5rem" }}>
+                    {item}
+                  </li>
+                ))}
+              </ol>
+            </section>
+
+            <section className="panel">
+              <h2 className="section-title">Impact</h2>
+              <div className="incident-impact-grid">
+                <div className="incident-impact-col">
+                  <h4>Affected ({top.affectedDownstreamServices.length})</h4>
+                  {top.affectedDownstreamServices.length === 0 ? (
+                    <p className="state-message">No confirmed downstream impact.</p>
+                  ) : (
+                    <ul className="incident-impact-list">
+                      {top.affectedDownstreamServices.map((s) => (
+                        <li key={s} className="mono">{s}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="incident-impact-col">
+                  <h4>Potentially affected ({potentiallyAffected.length})</h4>
+                  {potentiallyAffected.length === 0 ? (
+                    <p className="state-message">No further downstream services in the dependency graph.</p>
+                  ) : (
+                    <ul className="incident-impact-list">
+                      {potentiallyAffected.map((s) => (
+                        <li key={s} className="mono cell-muted">{s}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </section>
 
             {path.length > 1 && (
               <section className="panel">
@@ -181,31 +273,14 @@ export default function Incidents() {
             )}
 
             <section className="panel">
-              <h2 className="section-title">Evidence</h2>
-              <div className="inspector-row">
-                <span className="inspector-row-label">Reason</span>
-                <span className="inspector-row-value" style={{ fontWeight: 400 }}>
-                  {top.reason}
-                </span>
-              </div>
-              <div className="inspector-row">
-                <span className="inspector-row-label">Error rate</span>
-                <span className="inspector-row-value">{fmtRate(metrics.data?.errorRate[top.service])}</span>
-              </div>
-              <div className="inspector-row">
-                <span className="inspector-row-label">P95 latency</span>
-                <span className="inspector-row-value">{fmtMs(metrics.data?.latencyP95[top.service])}</span>
-              </div>
-            </section>
-
-            <section className="panel">
-              <h2 className="section-title">Timeline</h2>
+              <h2 className="section-title">Incident timeline</h2>
               {timeline.length === 0 ? (
                 <p className="state-message">No events in the live window for the affected services.</p>
               ) : (
                 <ol className="incident-timeline">
                   {timeline.map((e) => (
-                    <li key={e.eventId}>
+                    <li key={e.eventId} className={e.status === "FAILURE" ? "is-failure" : undefined}>
+                      <span className="incident-timeline-dot" />
                       <span className="incident-timeline-time">{new Date(e.timestamp).toLocaleTimeString()}</span>
                       <span className="incident-timeline-desc">
                         {e.sourceService} &rarr; {e.targetService} &middot; {e.operation}

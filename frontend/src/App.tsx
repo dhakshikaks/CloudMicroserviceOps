@@ -9,6 +9,7 @@ import Topology from "./pages/Topology";
 import Metrics from "./pages/Metrics";
 import Events from "./pages/Events";
 import Incidents from "./pages/Incidents";
+import Reports from "./pages/Reports";
 import SystemHealth from "./pages/SystemHealth";
 import Login from "./pages/Login";
 import { getToken } from "./services/auth";
@@ -43,6 +44,7 @@ function AppRoutes() {
           <Route path="/metrics" element={<Metrics />} />
           <Route path="/events" element={<Events />} />
           <Route path="/incidents" element={<Incidents />} />
+          <Route path="/reports" element={<Reports />} />
           <Route path="/system/health" element={<SystemHealth />} />
         </Route>
       </Routes>

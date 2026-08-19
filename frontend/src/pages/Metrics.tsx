@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Search } from "lucide-react";
 import {
   getCpuUsage,
   getCpuUsageRangeByService,
@@ -20,6 +21,7 @@ import { useTimeWindow } from "../context/TimeWindowContext";
 import MetricsPanel, { type RuntimeMetrics } from "../components/MetricsPanel";
 import Sparkline from "../components/charts/Sparkline";
 import LineChart from "../components/charts/LineChart";
+import MetricExplainer from "../components/MetricExplainer";
 
 const POLL_INTERVAL_MS = 7000;
 const TREND_POLL_INTERVAL_MS = 15000;
@@ -105,7 +107,42 @@ export default function Metrics() {
 
   const totalSamples = requestRateTotal.data?.[0]?.samples ?? [];
   const totalNow = totalSamples.length > 0 ? totalSamples[totalSamples.length - 1].value : undefined;
-  const updatedLabel = updatedAt ? `${Math.max(0, Math.round((Date.now() - updatedAt) / 1000))}s ago` : "";
+  const updatedSecondsAgo = updatedAt ? Math.max(0, Math.round((Date.now() - updatedAt) / 1000)) : undefined;
+  const updatedLabel = updatedSecondsAgo !== undefined ? `${updatedSecondsAgo}s ago` : "";
+
+  type TableSortKey = "service" | "requestRate" | "errorRate" | "latencyP95" | "cpu" | "memory";
+  const [tableSearch, setTableSearch] = useState("");
+  const [tableSort, setTableSort] = useState<{ key: TableSortKey; dir: "asc" | "desc" }>({ key: "service", dir: "asc" });
+
+  const tableRows = useMemo(() => {
+    const rows = MONITORED_SERVICES.filter((s) => s.toLowerCase().includes(tableSearch.trim().toLowerCase())).map(
+      (service) => ({
+        service,
+        requestRate: metrics.data?.requestRate[service],
+        errorRate: metrics.data?.errorRate[service],
+        latencyP95: metrics.data?.latencyP95[service],
+        cpu: metrics.data?.cpu[service],
+        memory: metrics.data?.memory[service],
+      })
+    );
+    rows.sort((a, b) => {
+      const { key, dir } = tableSort;
+      const av = key === "service" ? a.service : a[key];
+      const bv = key === "service" ? b.service : b[key];
+      let cmp: number;
+      if (typeof av === "string" || typeof bv === "string") {
+        cmp = String(av ?? "").localeCompare(String(bv ?? ""));
+      } else {
+        cmp = (av ?? -Infinity) - (bv ?? -Infinity);
+      }
+      return dir === "asc" ? cmp : -cmp;
+    });
+    return rows;
+  }, [metrics.data, tableSearch, tableSort]);
+
+  function handleTableSort(key: TableSortKey) {
+    setTableSort((prev) => (prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
+  }
 
   return (
     <div className="page">
@@ -122,6 +159,16 @@ export default function Metrics() {
           </div>
         </div>
         <LineChart samples={totalSamples} width={1200} height={220} yFormat={(v) => `${v.toFixed(1)}/s`} />
+        <MetricExplainer
+          text={
+            totalNow === undefined
+              ? "Aggregate request rate across all monitored services during the selected observation window."
+              : `Services are currently handling ${totalNow.toFixed(2)} requests per second, summed across all monitored services in the selected ${timeWindow} window.`
+          }
+          source="Prometheus"
+          windowLabel={timeWindow}
+          updatedSecondsAgo={updatedSecondsAgo}
+        />
       </div>
 
       <MetricsPanel metrics={metrics.data} loading={metrics.loading} error={metrics.error} />
@@ -149,6 +196,55 @@ export default function Metrics() {
               ))}
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-header-row">
+          <h2 className="section-title">Raw metrics — current snapshot</h2>
+        </div>
+        <div className="table-toolbar" style={{ marginBottom: "0.6rem" }}>
+          <div className="table-search">
+            <Search size={13} />
+            <input type="text" placeholder="Search service…" value={tableSearch} onChange={(e) => setTableSearch(e.target.value)} />
+          </div>
+        </div>
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                {(
+                  [
+                    ["service", "Service"],
+                    ["requestRate", "Req rate"],
+                    ["errorRate", "Error rate"],
+                    ["latencyP95", "P95"],
+                    ["cpu", "CPU"],
+                    ["memory", "Memory"],
+                  ] as [TableSortKey, string][]
+                ).map(([key, label]) => (
+                  <th key={key} className="is-sortable" onClick={() => handleTableSort(key)}>
+                    {label}
+                    {tableSort.key === key && <span className="sort-arrow">{tableSort.dir === "asc" ? "↑" : "↓"}</span>}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {tableRows.map((row) => (
+                <tr key={row.service}>
+                  <td>{row.service}</td>
+                  <td>{row.requestRate === undefined ? "—" : `${row.requestRate.toFixed(2)}/s`}</td>
+                  <td className={row.errorRate !== undefined && row.errorRate > 0 ? "cell-elevated" : undefined}>
+                    {row.errorRate === undefined ? "—" : `${row.errorRate.toFixed(2)}/s`}
+                  </td>
+                  <td>{row.latencyP95 === undefined ? "—" : `${(row.latencyP95 * 1000).toFixed(0)}ms`}</td>
+                  <td>{row.cpu === undefined ? "—" : `${(row.cpu * 100).toFixed(1)}%`}</td>
+                  <td>{row.memory === undefined ? "—" : `${(row.memory / 1024 / 1024).toFixed(1)}MB`}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
     </div>

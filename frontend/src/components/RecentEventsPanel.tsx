@@ -4,6 +4,8 @@ import { LIVE_WINDOW_MINUTES } from "../services/api";
 import SectionState from "./SectionState";
 import StatusBadge from "./StatusBadge";
 
+export type EventSortKey = "timestamp" | "sourceService" | "targetService" | "status" | "durationMs";
+
 interface Props {
   events: ServiceEventRecord[] | null;
   loading: boolean;
@@ -11,6 +13,11 @@ interface Props {
   emptyMessage?: string;
   /** compact = Overview's trimmed glance (no Window column, links to /events for the rest). */
   compact?: boolean;
+  sortKey?: EventSortKey;
+  sortDir?: "asc" | "desc";
+  onSort?: (key: EventSortKey) => void;
+  onRowClick?: (event: ServiceEventRecord) => void;
+  selectedEventId?: string | null;
 }
 
 const LIVE_WINDOW_MS = LIVE_WINDOW_MINUTES * 60_000;
@@ -32,7 +39,40 @@ function formatAge(timestamp: string): string {
   return `${days}d ago`;
 }
 
-export default function RecentEventsPanel({ events, loading, error, emptyMessage, compact = false }: Props) {
+function SortableHeader({
+  label,
+  sortKey,
+  activeKey,
+  dir,
+  onSort,
+}: {
+  label: string;
+  sortKey: EventSortKey;
+  activeKey?: EventSortKey;
+  dir?: "asc" | "desc";
+  onSort?: (key: EventSortKey) => void;
+}) {
+  if (!onSort) return <th>{label}</th>;
+  return (
+    <th className="is-sortable" onClick={() => onSort(sortKey)}>
+      {label}
+      {activeKey === sortKey && <span className="sort-arrow">{dir === "asc" ? "↑" : "↓"}</span>}
+    </th>
+  );
+}
+
+export default function RecentEventsPanel({
+  events,
+  loading,
+  error,
+  emptyMessage,
+  compact = false,
+  sortKey,
+  sortDir,
+  onSort,
+  onRowClick,
+  selectedEventId,
+}: Props) {
   return (
     <section className="panel">
       <div className="panel-header-row">
@@ -54,19 +94,24 @@ export default function RecentEventsPanel({ events, loading, error, emptyMessage
           <table className="data-table">
             <thead>
               <tr>
-                <th>Time</th>
+                <SortableHeader label="Time" sortKey="timestamp" activeKey={sortKey} dir={sortDir} onSort={onSort} />
                 {!compact && <th>Window</th>}
-                <th>Source</th>
-                <th>Target</th>
+                <SortableHeader label="Source" sortKey="sourceService" activeKey={sortKey} dir={sortDir} onSort={onSort} />
+                <SortableHeader label="Target" sortKey="targetService" activeKey={sortKey} dir={sortDir} onSort={onSort} />
                 <th>Operation</th>
-                <th>Status</th>
-                <th>Duration</th>
+                <SortableHeader label="Status" sortKey="status" activeKey={sortKey} dir={sortDir} onSort={onSort} />
+                <SortableHeader label="Duration" sortKey="durationMs" activeKey={sortKey} dir={sortDir} onSort={onSort} />
                 {!compact && <th>Event ID</th>}
               </tr>
             </thead>
             <tbody>
               {events?.map((event) => (
-                <tr key={event.eventId}>
+                <tr
+                  key={event.eventId}
+                  className={`${onRowClick ? "is-selectable" : ""}${selectedEventId === event.eventId ? " active" : ""}`}
+                  onClick={onRowClick ? () => onRowClick(event) : undefined}
+                  style={selectedEventId === event.eventId ? { background: "var(--bg-surface-raised)" } : undefined}
+                >
                   <td className="cell-muted">
                     <div>{new Date(event.timestamp).toLocaleTimeString()}</div>
                     <div className="cell-age">{formatAge(event.timestamp)}</div>

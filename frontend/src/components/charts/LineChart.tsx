@@ -8,7 +8,7 @@ interface Props {
   height?: number;
   yFormat?: (v: number) => string;
   emptyLabel?: string;
-  /** critical = error-data series, rendered in red instead of the default blue. */
+  /** critical = error-data series, rendered with a heavier stroke and inverted live-dot emphasis instead of hue. */
   tone?: "default" | "critical";
 }
 

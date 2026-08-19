@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   Activity,
   AlertTriangle,
+  FileText,
   HeartPulse,
   LayoutDashboard,
   LineChart,
@@ -34,7 +35,7 @@ interface NavSection {
 const NAV_SECTIONS: NavSection[] = [
   { heading: null, items: [{ to: "/", label: "Overview", icon: LayoutDashboard, end: true }] },
   {
-    heading: "Monitoring",
+    heading: "Monitor",
     items: [
       { to: "/services", label: "Services", icon: Server },
       { to: "/topology", label: "Topology", icon: Network },
@@ -42,8 +43,9 @@ const NAV_SECTIONS: NavSection[] = [
       { to: "/events", label: "Events", icon: Activity },
     ],
   },
-  { heading: "Incidents", items: [{ to: "/incidents", label: "Root Cause", icon: AlertTriangle }] },
-  { heading: "System", items: [{ to: "/system/health", label: "Health", icon: HeartPulse }] },
+  { heading: "Investigate", items: [{ to: "/incidents", label: "Incident Center", icon: AlertTriangle }] },
+  { heading: "Reports", items: [{ to: "/reports", label: "Report Center", icon: FileText }] },
+  { heading: "System", items: [{ to: "/system/health", label: "System Health", icon: HeartPulse }] },
 ];
 
 export default function Sidebar() {
@@ -62,10 +64,10 @@ export default function Sidebar() {
   }
 
   const pulseLabel =
-    systemPulse === "ok" ? "All systems operational" : systemPulse === "warn" ? "Degraded" : "Checking status";
+    systemPulse === "ok" ? "System status · connected" : systemPulse === "warn" ? "System status · degraded" : "System status · checking";
   // "warn" from deriveSystemPulse means a service is confirmed down (worse
-  // than merely unknown), so it maps to the red "bad" dot; "unknown" (status
-  // not yet observed) maps to the amber "warn" dot. Intentional, not a typo.
+  // than merely unknown), so it maps to the inverted "bad" dot; "unknown"
+  // (status not yet observed) maps to the muted "warn" dot. Intentional, not a typo.
   const pulseDotClass = systemPulse === "ok" ? "ok" : systemPulse === "warn" ? "bad" : "warn";
 
   return (
@@ -74,7 +76,7 @@ export default function Sidebar() {
         <span className="sidebar-mark" />
         <span className="sidebar-brand-text">
           <span className="sidebar-brand-name">CloudMicroserviceOps</span>
-          <span className="sidebar-brand-tag">Observability</span>
+          <span className="sidebar-brand-tag">Observability Platform</span>
         </span>
       </div>
 

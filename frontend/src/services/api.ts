@@ -1,6 +1,8 @@
 import type {
   DependencyEdge,
   DependencyGraphResponse,
+  IncidentReport,
+  NotificationRecord,
   RootCauseCandidate,
   ServiceEventRecord,
   ServiceHealthMap,
@@ -62,6 +64,31 @@ export function getRecentEvents(): Promise<ServiceEventRecord[]> {
 // used where a flat list is more convenient (e.g. filtering to one service).
 export function getDependencies(): Promise<DependencyEdge[]> {
   return getJson(API_BASE_URL, "/dependencies");
+}
+
+export function getNotifications(windowMinutes: number = LIVE_WINDOW_MINUTES): Promise<NotificationRecord[]> {
+  return getJson(API_BASE_URL, `/notifications?windowMinutes=${windowMinutes}`);
+}
+
+// The backend returns 204 No Content (not a JSON body) when there is no
+// active root-cause candidate in the window - handled explicitly here rather
+// than through getJson(), which always expects a JSON body.
+export async function getIncidentReport(windowMinutes: number = LIVE_WINDOW_MINUTES): Promise<IncidentReport | null> {
+  const token = getToken();
+  const response = await fetch(`${API_BASE_URL}/reports/incident?windowMinutes=${windowMinutes}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  if (response.status === 401) {
+    logout();
+    window.location.href = "/login";
+  }
+  if (response.status === 204) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error(`Request to /reports/incident failed with status ${response.status}`);
+  }
+  return response.json() as Promise<IncidentReport>;
 }
 
 interface PrometheusVectorResult {

@@ -51,3 +51,28 @@ export interface AuthUser {
   username: string;
   role: UserRole;
 }
+
+export type NotificationType = "INCIDENT_DETECTED" | "FAILURE" | "RECOVERY";
+export type NotificationSeverity = "CRITICAL" | "WARNING" | "INFO";
+
+export interface NotificationRecord {
+  id: string;
+  type: NotificationType;
+  service: string;
+  message: string;
+  timestamp: string;
+  severity: NotificationSeverity;
+}
+
+export interface IncidentReport {
+  reportId: string;
+  generatedAt: string;
+  incidentId: string;
+  rootCauseService: string;
+  confidence: number;
+  reason: string;
+  affectedDownstreamServices: string[];
+  relatedEdges: DependencyEdge[];
+  timeline: ServiceEventRecord[];
+  failureCount: number;
+}
