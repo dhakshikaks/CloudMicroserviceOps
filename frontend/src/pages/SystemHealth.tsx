@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
 import { getCurrentUser } from "../services/auth";
-import { getServiceHealth, MONITORED_SERVICES } from "../services/api";
+import { getPrometheusReachable, getServiceHealth, MONITORED_SERVICES } from "../services/api";
 import { useFetchState } from "../hooks/useFetchState";
 import { usePolling } from "../hooks/usePolling";
 import StatusBadge from "../components/StatusBadge";
@@ -12,28 +11,12 @@ const POLL_INTERVAL_MS = 7000;
 
 export default function SystemHealth() {
   const health = useFetchState<ServiceHealthMap>();
-  usePolling(() => health.run(getServiceHealth()), POLL_INTERVAL_MS);
-
-  const [prometheusReachable, setPrometheusReachable] = useState<boolean | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    function checkPrometheus() {
-      const prometheusUrl = import.meta.env.VITE_PROMETHEUS_URL ?? "/prometheus";
-      fetch(`${prometheusUrl}/api/v1/query?query=up`)
-        .then((res) => {
-          if (!cancelled) setPrometheusReachable(res.ok);
-        })
-        .catch(() => {
-          if (!cancelled) setPrometheusReachable(false);
-        });
-    }
-    checkPrometheus();
-    const id = setInterval(checkPrometheus, POLL_INTERVAL_MS);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, []);
+  const prometheus = useFetchState<boolean>();
+  usePolling(() => {
+    health.run(getServiceHealth());
+    prometheus.run(getPrometheusReachable());
+  }, POLL_INTERVAL_MS);
+  const prometheusReachable = prometheus.data ?? null;
 
   const user = getCurrentUser();
 
@@ -69,7 +52,7 @@ export default function SystemHealth() {
       <section className="panel">
         <h2 className="section-title">Observability backend</h2>
         <div className="health-status-row">
-          <span>Prometheus (/prometheus)</span>
+          <span>Prometheus (checked via backend)</span>
           <StatusBadge status={prometheusReachable === null ? "UNKNOWN" : prometheusReachable ? "UP" : "DOWN"} />
         </div>
         {prometheusReachable === false && <p className="section-subtitle">Charts and metrics elsewhere will be unavailable.</p>}

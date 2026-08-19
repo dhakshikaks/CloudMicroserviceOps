@@ -2,13 +2,9 @@ import { Fragment, useState } from "react";
 import { Copy, Download, FileJson, FileSpreadsheet, Printer } from "lucide-react";
 import {
   getDependencyGraph,
-  getCpuUsage,
-  getErrorRate,
   getIncidentReport,
-  getLatencyP95,
-  getMemoryUsage,
+  getMetricsSnapshot,
   getRecentEvents,
-  getRequestRate,
   getServiceHealth,
   LIVE_WINDOW_MINUTES,
   MONITORED_SERVICES,
@@ -90,14 +86,8 @@ export default function Reports() {
         const payload: ServicePayload = { generatedAt: new Date().toISOString(), health, graph };
         record = { id: `R-${type.toUpperCase()}-${Date.now()}`, type, createdAt: payload.generatedAt, status: "READY", payload };
       } else if (type === "performance") {
-        const [cpu, memory, requestRate, errorRate, latencyP95] = await Promise.all([
-          getCpuUsage(),
-          getMemoryUsage(),
-          getRequestRate(),
-          getErrorRate(),
-          getLatencyP95(),
-        ]);
-        const payload: PerformancePayload = { generatedAt: new Date().toISOString(), cpu, memory, requestRate, errorRate, latencyP95 };
+        const m = await getMetricsSnapshot();
+        const payload: PerformancePayload = { generatedAt: new Date().toISOString(), ...m };
         record = { id: `R-PERF-${Date.now()}`, type, createdAt: payload.generatedAt, status: "READY", payload };
       } else {
         const events = await getRecentEvents();

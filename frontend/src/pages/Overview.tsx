@@ -1,14 +1,10 @@
 import { useEffect, useState } from "react";
 import {
-  getCpuUsage,
   getDependencyGraph,
-  getErrorRate,
   getErrorRateRange,
-  getLatencyP95,
   getLatencyP95Range,
-  getMemoryUsage,
+  getMetricsSnapshot,
   getRecentEvents,
-  getRequestRate,
   getRequestRateRange,
   getRootCauses,
   getServiceHealth,
@@ -47,11 +43,7 @@ export default function Overview() {
     graph.run(getDependencyGraph());
     rootCauses.run(getRootCauses());
     events.run(getRecentEvents());
-    metrics.run(
-      Promise.all([getCpuUsage(), getMemoryUsage(), getRequestRate(), getErrorRate(), getLatencyP95()]).then(
-        ([cpu, memory, requestRate, errorRate, latencyP95]) => ({ cpu, memory, requestRate, errorRate, latencyP95 })
-      )
-    );
+    metrics.run(getMetricsSnapshot());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, POLL_INTERVAL_MS);
 

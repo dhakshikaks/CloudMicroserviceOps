@@ -11,8 +11,12 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -69,6 +73,16 @@ public class ReportServiceImpl implements ReportService {
         String reportId = "R-" + incidentId.substring(0, Math.min(8, incidentId.length())).toUpperCase()
                 + "-" + Instant.now().getEpochSecond();
 
+        // Full current graph (not the affected-services-filtered relatedEdges
+        // above) so path/impact traversal can walk beyond the RCA's own
+        // directly-affected set - this is what used to be duplicated as
+        // buildDependencyPath/computeTransitiveDownstream in Incidents.tsx.
+        List<DependencyEdge> fullGraph = dependencyGraphService.getCurrentGraph();
+        List<String> dependencyPath = buildDependencyPath(top.service(), fullGraph);
+        List<String> potentiallyAffected = computeTransitiveDownstream(top.service(), fullGraph).stream()
+                .filter(service -> !top.affectedDownstreamServices().contains(service))
+                .toList();
+
         return Optional.of(new IncidentReportDTO(
                 reportId,
                 Instant.now(),
@@ -77,9 +91,67 @@ public class ReportServiceImpl implements ReportService {
                 top.score(),
                 top.reason(),
                 top.affectedDownstreamServices(),
+                dependencyPath,
+                potentiallyAffected,
                 relatedEdges,
                 timeline,
-                failureCount
+                failureCount,
+                ranked.subList(1, ranked.size())
         ));
+    }
+
+    /** Upstream/downstream walk through the real observed edges, from the root-cause service outward. */
+    private List<String> buildDependencyPath(String root, List<DependencyEdge> edges) {
+        Deque<String> path = new ArrayDeque<>(List.of(root));
+        Set<String> visited = new HashSet<>(Set.of(root));
+
+        String current = root;
+        while (true) {
+            String next = null;
+            for (DependencyEdge edge : edges) {
+                if (current.equals(edge.targetService()) && !visited.contains(edge.sourceService())) {
+                    next = edge.sourceService();
+                    break;
+                }
+            }
+            if (next == null) break;
+            path.addFirst(next);
+            visited.add(next);
+            current = next;
+        }
+
+        current = root;
+        while (true) {
+            String next = null;
+            for (DependencyEdge edge : edges) {
+                if (current.equals(edge.sourceService()) && !visited.contains(edge.targetService())) {
+                    next = edge.targetService();
+                    break;
+                }
+            }
+            if (next == null) break;
+            path.addLast(next);
+            visited.add(next);
+            current = next;
+        }
+
+        return new ArrayList<>(path);
+    }
+
+    /** Full forward transitive closure from root, purely from real observed edges. */
+    private List<String> computeTransitiveDownstream(String root, List<DependencyEdge> edges) {
+        Set<String> visited = new LinkedHashSet<>(Set.of(root));
+        Deque<String> queue = new ArrayDeque<>(List.of(root));
+        while (!queue.isEmpty()) {
+            String current = queue.poll();
+            for (DependencyEdge edge : edges) {
+                if (current.equals(edge.sourceService()) && !visited.contains(edge.targetService())) {
+                    visited.add(edge.targetService());
+                    queue.add(edge.targetService());
+                }
+            }
+        }
+        visited.remove(root);
+        return new ArrayList<>(visited);
     }
 }

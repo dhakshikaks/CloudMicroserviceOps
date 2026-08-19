@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getErrorRate, getServiceHealth, MONITORED_SERVICES } from "../services/api";
+import { getMetricsSnapshot, getServiceHealth, MONITORED_SERVICES } from "../services/api";
 import { useFetchState } from "../hooks/useFetchState";
 import { usePolling } from "../hooks/usePolling";
 import { useServiceInspectorData } from "../hooks/useServiceInspectorData";
@@ -29,7 +29,7 @@ export default function Services() {
   const errorRate = useFetchState<ServiceMetrics>();
   usePolling(() => {
     health.run(getServiceHealth());
-    errorRate.run(getErrorRate());
+    errorRate.run(getMetricsSnapshot().then((m) => m.errorRate));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, POLL_INTERVAL_MS);
 

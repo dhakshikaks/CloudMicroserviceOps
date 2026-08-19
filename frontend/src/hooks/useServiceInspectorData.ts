@@ -1,14 +1,10 @@
 import { useEffect } from "react";
 import {
-  getCpuUsage,
   getDependencies,
-  getErrorRate,
   getErrorRateRangeByService,
-  getLatencyP95,
   getLatencyP95RangeByService,
-  getMemoryUsage,
+  getMetricsSnapshot,
   getRecentEvents,
-  getRequestRate,
   getRequestRateRangeByService,
   getServiceHealth,
   type RangeSeries,
@@ -36,16 +32,14 @@ export function useServiceInspectorData(serviceName: string) {
 
   function loadAll() {
     snapshot.run(
-      Promise.all([getServiceHealth(), getCpuUsage(), getMemoryUsage(), getRequestRate(), getErrorRate(), getLatencyP95()]).then(
-        ([health, cpu, memory, requestRate, errorRate, latencyP95]) => ({
-          health,
-          cpu,
-          memory,
-          requestRate,
-          errorRate,
-          latencyP95,
-        })
-      )
+      Promise.all([getServiceHealth(), getMetricsSnapshot()]).then(([health, m]) => ({
+        health,
+        cpu: m.cpu,
+        memory: m.memory,
+        requestRate: m.requestRate,
+        errorRate: m.errorRate,
+        latencyP95: m.latencyP95,
+      }))
     );
     dependencies.run(getDependencies());
     events.run(getRecentEvents());

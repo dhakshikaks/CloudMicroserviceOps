@@ -1,11 +1,4 @@
-import {
-  getCpuUsage,
-  getDependencyGraph,
-  getErrorRate,
-  getLatencyP95,
-  getMemoryUsage,
-  getRequestRate,
-} from "../services/api";
+import { getDependencyGraph, getMetricsSnapshot } from "../services/api";
 import { useFetchState } from "../hooks/useFetchState";
 import { usePolling } from "../hooks/usePolling";
 import DependencyGraphPanel from "../components/DependencyGraphPanel";
@@ -20,11 +13,7 @@ export default function Topology() {
   const metrics = useFetchState<RuntimeMetrics>();
   usePolling(() => {
     graph.run(getDependencyGraph());
-    metrics.run(
-      Promise.all([getCpuUsage(), getMemoryUsage(), getRequestRate(), getErrorRate(), getLatencyP95()]).then(
-        ([cpu, memory, requestRate, errorRate, latencyP95]) => ({ cpu, memory, requestRate, errorRate, latencyP95 })
-      )
-    );
+    metrics.run(getMetricsSnapshot());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, POLL_INTERVAL_MS);
 

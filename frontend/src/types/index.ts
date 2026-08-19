@@ -72,7 +72,12 @@ export interface IncidentReport {
   confidence: number;
   reason: string;
   affectedDownstreamServices: string[];
+  /** Java-computed upstream/downstream walk through the real observed edges, from the root-cause service outward. */
+  dependencyPath: string[];
+  /** Transitive downstream services not already in affectedDownstreamServices - a weaker, structural signal. */
+  potentiallyAffected: string[];
   relatedEdges: DependencyEdge[];
   timeline: ServiceEventRecord[];
   failureCount: number;
+  otherCandidates: RootCauseCandidate[];
 }

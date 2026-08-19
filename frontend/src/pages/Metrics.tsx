@@ -1,15 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import {
-  getCpuUsage,
   getCpuUsageRangeByService,
-  getErrorRate,
   getErrorRateRangeByService,
-  getLatencyP95,
   getLatencyP95RangeByService,
-  getMemoryUsage,
   getMemoryUsageRangeByService,
-  getRequestRate,
+  getMetricsSnapshot,
   getRequestRateRange,
   getRequestRateRangeByService,
   MONITORED_SERVICES,
@@ -45,11 +41,7 @@ export default function Metrics() {
   const [updatedAt, setUpdatedAt] = useState<number | null>(null);
 
   usePolling(() => {
-    metrics.run(
-      Promise.all([getCpuUsage(), getMemoryUsage(), getRequestRate(), getErrorRate(), getLatencyP95()]).then(
-        ([cpu, memory, requestRate, errorRate, latencyP95]) => ({ cpu, memory, requestRate, errorRate, latencyP95 })
-      )
-    );
+    metrics.run(getMetricsSnapshot());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, POLL_INTERVAL_MS);
 

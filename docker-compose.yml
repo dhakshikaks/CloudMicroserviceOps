@@ -146,11 +146,13 @@ services:
     build:
       context: ./frontend
       args:
-        # Build-time only (Vite inlines these) - relative paths route through
-        # this same container's own Nginx proxy, so they work unchanged for
-        # both local Docker Compose and a single-host cloud deployment.
+        # Build-time only (Vite inlines this) - a relative path routes through
+        # this same container's own Nginx proxy, so it works unchanged for
+        # both local Docker Compose and a single-host cloud deployment. The
+        # frontend no longer talks to Prometheus directly - that is now
+        # aggregated by the Java backend (com.cloudmicroops.metrics) and
+        # served under this same /api path.
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
-        VITE_PROMETHEUS_URL: ${VITE_PROMETHEUS_URL:-/prometheus}
     restart: *restart-policy
     ports:
       - "80:80"
