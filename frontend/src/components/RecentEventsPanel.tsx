@@ -61,6 +61,7 @@ export default function RecentEventsPanel({ events, loading, error, emptyMessage
                 <th>Operation</th>
                 <th>Status</th>
                 <th>Duration</th>
+                {!compact && <th>Event ID</th>}
               </tr>
             </thead>
             <tbody>
@@ -82,6 +83,7 @@ export default function RecentEventsPanel({ events, loading, error, emptyMessage
                     <StatusBadge status={event.status} />
                   </td>
                   <td>{event.durationMs} ms</td>
+                  {!compact && <td className="cell-muted">#{event.eventId.slice(0, 8)}</td>}
                 </tr>
               ))}
             </tbody>

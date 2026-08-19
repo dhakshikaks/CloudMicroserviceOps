@@ -33,7 +33,7 @@ export default function Topology() {
       <div className="page-header">
         <h1>Topology</h1>
       </div>
-      <DependencyGraphPanel graph={graph.data} loading={graph.loading} error={graph.error} metrics={metrics.data} minCanvasHeight={560} />
+      <DependencyGraphPanel graph={graph.data} loading={graph.loading} error={graph.error} metrics={metrics.data} minCanvasHeight={165} />
     </div>
   );
 }

@@ -36,6 +36,7 @@
   --transition: 120ms ease;
   --sidebar-width: 232px;
   --content-max: 1320px;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", "Menlo", monospace;
 
   font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
@@ -56,6 +57,13 @@ h1, h2, h3, h4 {
   font-weight: 600;
   letter-spacing: -0.01em;
   margin: 0;
+}
+
+/* Technical values - identifiers, metrics, timestamps, percentages - read as
+   data, not prose, so they get a monospace treatment throughout the app. */
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 button {
@@ -420,6 +428,7 @@ a {
   color: var(--text-muted);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
 }
 
 .section-title {
@@ -524,6 +533,7 @@ a {
   font-weight: 700;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
 }
 
 .summary-value.tone-critical {
@@ -577,6 +587,7 @@ a {
   font-weight: 700;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
 }
 
 .stat-detail {
@@ -698,6 +709,7 @@ a {
 .health-expanded dd {
   margin: 0;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
   color: var(--text-primary);
 }
 
@@ -734,6 +746,7 @@ a {
   padding: 0.4rem 0.6rem;
   border-bottom: 1px solid var(--border);
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
   color: var(--text-primary);
   white-space: nowrap;
 }
@@ -837,6 +850,7 @@ a {
   font-size: 0.86rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
 }
 
 .rca-highlight-reason {
@@ -895,6 +909,7 @@ a {
 .rca-rank {
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
   font-size: 0.78rem;
 }
 
@@ -906,6 +921,7 @@ a {
 .rca-score {
   margin-left: auto;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
   color: var(--text-secondary);
   font-size: 0.82rem;
 }
@@ -1171,6 +1187,7 @@ a {
 
 .chart-tooltip-value {
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
   color: var(--text-primary);
 }
 
@@ -1352,13 +1369,14 @@ a {
   font-size: 1.6rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
 }
 
 /* ---------------- Overview command grid ---------------- */
 
 .command-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) 280px;
   gap: 1px;
   background: var(--border);
   border: 1px solid var(--border);
@@ -1488,12 +1506,10 @@ a {
 .topology-canvas {
   position: relative;
   background: var(--bg-page);
-  min-height: 460px;
   overflow: hidden;
 }
 
 .command-grid-topology .topology-canvas {
-  min-height: 520px;
   flex: 1;
 }
 
@@ -1529,13 +1545,8 @@ a {
 
 .topology-svg {
   width: 100%;
-  height: 460px;
   cursor: grab;
   display: block;
-}
-
-.command-grid-topology .topology-svg {
-  height: 520px;
 }
 
 .topology-canvas.is-fullscreen .topology-svg {
@@ -1572,23 +1583,55 @@ a {
   stroke: var(--accent);
 }
 
-.topology-node-label {
-  fill: var(--text-primary);
-  font-size: 14px;
-  font-weight: 700;
+.topology-node-dot {
   pointer-events: none;
 }
 
-.topology-node-sublabel {
-  fill: var(--text-muted);
+.topology-node-dot.ok {
+  fill: var(--accent);
+}
+
+.topology-node-dot.critical {
+  fill: var(--critical);
+}
+
+.topology-node-name {
+  fill: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+}
+
+.topology-node-status {
   font-size: 10px;
-  text-transform: uppercase;
+  font-weight: 700;
   letter-spacing: 0.04em;
   pointer-events: none;
 }
 
-.topology-node-rect.degraded ~ .topology-node-sublabel {
+.topology-node-status.ok {
+  fill: var(--accent);
+}
+
+.topology-node-status.critical {
   fill: var(--critical);
+}
+
+.topology-node-divider {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.topology-node-metric {
+  fill: var(--text-secondary);
+  font-size: 11px;
+  pointer-events: none;
+}
+
+.topology-node-metric.critical {
+  fill: var(--critical);
+  font-weight: 600;
 }
 
 .topology-edge {
@@ -1622,6 +1665,7 @@ a {
   fill: var(--text-muted);
   font-size: 10px;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
 }
 
 .topology-edge-label.has-failures {
@@ -1767,6 +1811,7 @@ a {
 .inspector-row-value {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
 }
 
 .service-inspector-section h3 {
@@ -1954,6 +1999,7 @@ a {
   font-size: 0.72rem;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
 }
 
 .incident-meta-row {
@@ -2021,6 +2067,7 @@ a {
 .incident-timeline-time {
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
   flex-shrink: 0;
   font-size: 0.76rem;
 }
@@ -2079,12 +2126,6 @@ a {
 @media (max-width: 1180px) {
   .command-grid {
     grid-template-columns: 1fr;
-  }
-
-  .command-grid-topology .topology-canvas,
-  .command-grid-topology .topology-svg {
-    min-height: 400px;
-    height: 400px;
   }
 
   .explorer-grid {

@@ -10,7 +10,7 @@ interface Props {
   graph: DependencyGraphResponse | null;
   loading: boolean;
   error: string | null;
-  /** Optional: when provided, hovering a node shows its real live metrics too. */
+  /** Optional: when provided, node cards show real live telemetry inline, not just on hover. */
   metrics?: RuntimeMetrics | null;
   /** Floor for the canvas height, e.g. a taller value on a dedicated full-page view. */
   minCanvasHeight?: number;
@@ -46,11 +46,12 @@ function computeLayers(graph: DependencyGraphResponse): string[][] {
 // Left-to-right layout (layers = columns): fills a wide canvas far better
 // than a top-to-bottom chain does, and matches how real infra service maps
 // (Datadog, Docker Desktop) are conventionally read - left is upstream.
-// Nodes sized deliberately large - the topology is the product's hero visual.
-const NODE_W = 180;
-const NODE_H = 64;
-const LAYER_GAP_X = 150;
-const NODE_GAP_Y = 36;
+// Nodes are deliberately large, information-dense cards - the topology is
+// this product's hero visual, not a decorative diagram.
+const NODE_W = 224;
+const NODE_H = 104;
+const LAYER_GAP_X = 130;
+const NODE_GAP_Y = 48;
 
 function computePositions(layers: string[][]): Map<string, { x: number; y: number }> {
   const positions = new Map<string, { x: number; y: number }>();
@@ -98,6 +99,12 @@ function fmtRate(v: number | undefined): string {
 function fmtMs(v: number | undefined): string {
   return v === undefined ? "—" : `${(v * 1000).toFixed(0)} ms`;
 }
+/** Error % derived from two real Prometheus values (errorRate / requestRate) - not fabricated. */
+function fmtErrPct(errorRate: number | undefined, requestRate: number | undefined): string {
+  if (errorRate === undefined || requestRate === undefined) return "—";
+  if (requestRate <= 0) return "0.0%";
+  return `${((errorRate / requestRate) * 100).toFixed(1)}%`;
+}
 
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 3;
@@ -132,12 +139,15 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
   const totalHeight = Math.max(...layers.map((l) => l.length * (NODE_H + NODE_GAP_Y) - NODE_GAP_Y), NODE_H, 1);
 
   // Canvas height follows actual content (clamped) instead of wasting a
-  // fixed tall box on a simple/narrow graph - avoids the "excessive empty
-  // space" a fixed-height letterboxed viewBox would otherwise produce, while
-  // still giving the topology real presence as the product's hero visual.
-  const canvasHeight = Math.min(620, Math.max(minCanvasHeight ?? 280, totalHeight + 120));
+  // fixed tall box on a simple/narrow graph. Width always fills 100% of the
+  // container by construction (the svg is width:100% and the viewBox width
+  // equals the real content width) - so there is never unused horizontal
+  // margin regardless of container size. Vertical padding is kept tight so
+  // the node row itself dominates the canvas rather than floating in empty
+  // black space above and below it.
+  const canvasHeight = Math.min(460, Math.max(minCanvasHeight ?? 140, totalHeight + 34));
 
-  const baseViewBox = { x: -30, y: -40, w: totalWidth + 60, h: totalHeight + 80 };
+  const baseViewBox = { x: -30, y: -17, w: totalWidth + 60, h: totalHeight + 34 };
   const viewBox = {
     x: baseViewBox.x + pan.x,
     y: baseViewBox.y + pan.y,
@@ -241,10 +251,10 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
               onMouseLeave={stopDragging}
             >
               <defs>
-                <marker id="topology-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <marker id="topology-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
                   <path d="M0,0 L10,5 L0,10 z" className="topology-arrowhead" />
                 </marker>
-                <marker id="topology-arrow-failed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <marker id="topology-arrow-failed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
                   <path d="M0,0 L10,5 L0,10 z" className="topology-arrowhead failed" />
                 </marker>
               </defs>
@@ -262,9 +272,10 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
                 const hasFailures = edge.failedCalls > 0;
                 const failurePct = edge.totalCalls > 0 ? Math.round((edge.failedCalls / edge.totalCalls) * 100) : 0;
                 const pathId = `edge-${edge.sourceService}-${edge.targetService}`;
-                const labelText = hasFailures
-                  ? `${edge.totalCalls} calls · ${edge.failedCalls} failed · ${failurePct}%`
-                  : `${edge.totalCalls} calls · ${Math.round(edge.confidence * 100)}%`;
+                // Line weight reflects observed traffic volume, within a sane visual range.
+                const strokeWidth = clamp(1.25 + Math.log2(1 + edge.totalCalls) * 0.35, 1.25, 3.5);
+                const labelLine1 = `${edge.totalCalls} calls`;
+                const labelLine2 = hasFailures ? `${edge.failedCalls} failed · ${failurePct}%` : `${Math.round(edge.confidence * 100)}% ok`;
                 const pathD = `M${x1},${y1} C${midX},${y1} ${midX},${y2} ${x2},${y2}`;
                 return (
                   <g
@@ -277,6 +288,7 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
                       id={pathId}
                       d={pathD}
                       className={`topology-edge${hasFailures ? " has-failures" : ""}`}
+                      style={{ strokeWidth }}
                       markerEnd={`url(#${hasFailures ? "topology-arrow-failed" : "topology-arrow"})`}
                     />
                     {/* Traffic direction indicator - a dot travels the real edge path on a
@@ -287,19 +299,22 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
                       </animateMotion>
                     </circle>
                     <rect
-                      x={midX - labelText.length * 2.6}
-                      y={midY - 17}
-                      width={labelText.length * 5.2}
-                      height={13}
+                      x={midX - 46}
+                      y={midY - 30}
+                      width={92}
+                      height={24}
                       className="topology-edge-label-bg"
                     />
+                    <text x={midX} y={midY - 18} textAnchor="middle" className="topology-edge-label mono">
+                      {labelLine1}
+                    </text>
                     <text
                       x={midX}
-                      y={midY - 7}
+                      y={midY - 8}
                       textAnchor="middle"
-                      className={`topology-edge-label${hasFailures ? " has-failures" : ""}`}
+                      className={`topology-edge-label mono${hasFailures ? " has-failures" : ""}`}
                     >
-                      {labelText}
+                      {labelLine2}
                     </text>
                   </g>
                 );
@@ -309,6 +324,13 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
                 const stats = computeNodeStats(nodeId, graph.edges);
                 const degraded = stats.failedIn > 0;
                 const selected = nodeId === selectedNodeId;
+                const cpu = metrics?.cpu[nodeId];
+                const requestRate = metrics?.requestRate[nodeId];
+                const errorRate = metrics?.errorRate[nodeId];
+                const p95 = metrics?.latencyP95[nodeId];
+                const hasErrorSignal = errorRate !== undefined && errorRate > 0;
+                const statusLabel = degraded || hasErrorSignal ? "ERROR" : "UP";
+                const toneClass = degraded ? "critical" : "ok";
                 return (
                   <g
                     key={nodeId}
@@ -325,12 +347,31 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
                       rx={2}
                       className={`topology-node-rect${degraded ? " degraded" : ""}${selected ? " selected" : ""}`}
                     />
-                    <text x={NODE_W / 2} y={NODE_H / 2 - 4} textAnchor="middle" className="topology-node-label">
-                      {nodeId}
+                    <circle cx={16} cy={20} r={4} className={`topology-node-dot ${toneClass}`} />
+                    <text x={28} y={24} className="topology-node-name mono">
+                      {nodeId.toUpperCase()}
                     </text>
-                    <text x={NODE_W / 2} y={NODE_H / 2 + 16} textAnchor="middle" className="topology-node-sublabel">
-                      {degraded ? `${stats.failedIn} failed` : "healthy"}
+                    <text x={NODE_W - 14} y={24} textAnchor="end" className={`topology-node-status mono ${toneClass}`}>
+                      {statusLabel}
                     </text>
+                    <line x1={14} y1={36} x2={NODE_W - 14} y2={36} className="topology-node-divider" />
+                    <text x={14} y={58} className="topology-node-metric mono">
+                      {fmtRate(requestRate)}
+                    </text>
+                    <text x={NODE_W - 14} y={58} textAnchor="end" className="topology-node-metric mono">
+                      P95 {fmtMs(p95)}
+                    </text>
+                    <text x={14} y={78} className={`topology-node-metric mono${hasErrorSignal ? " critical" : ""}`}>
+                      ERR {fmtErrPct(errorRate, requestRate)}
+                    </text>
+                    <text x={NODE_W - 14} y={78} textAnchor="end" className="topology-node-metric mono">
+                      CPU {fmtPercent(cpu)}
+                    </text>
+                    {degraded && (
+                      <text x={14} y={96} className="topology-node-metric mono critical">
+                        {stats.failedIn} FAILED (inbound)
+                      </text>
+                    )}
                   </g>
                 );
               })}
@@ -340,23 +381,23 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
 
         {selectedStats && selectedNodeId && (
           <div className="topology-selected-panel">
-            <span className="topology-selected-name">{selectedNodeId}</span>
+            <span className="topology-selected-name mono">{selectedNodeId}</span>
             <div className="topology-selected-stat">
               <span className="topology-selected-stat-label">In / Out</span>
-              <span>
+              <span className="mono">
                 {selectedStats.incomingCount} / {selectedStats.outgoingCount} deps
               </span>
             </div>
             <div className="topology-selected-stat">
               <span className="topology-selected-stat-label">Calls</span>
-              <span>
+              <span className="mono">
                 {selectedStats.totalIn} in, {selectedStats.totalOut} out
               </span>
             </div>
             {selectedStats.failedIn > 0 && (
               <div className="topology-selected-stat">
                 <span className="topology-selected-stat-label">Failed</span>
-                <span style={{ color: "var(--critical)" }}>{selectedStats.failedIn} inbound</span>
+                <span className="mono" style={{ color: "var(--critical)" }}>{selectedStats.failedIn} inbound</span>
               </div>
             )}
             <button
@@ -375,14 +416,14 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
             <div className="chart-tooltip-time">
               {hoverEdge.edge.sourceService} &rarr; {hoverEdge.edge.targetService}
             </div>
-            <div>{hoverEdge.edge.totalCalls} requests</div>
-            <div>{hoverEdge.edge.successfulCalls} success &middot; {hoverEdge.edge.failedCalls} failed</div>
-            <div>
+            <div className="mono">{hoverEdge.edge.totalCalls} requests</div>
+            <div className="mono">{hoverEdge.edge.successfulCalls} success &middot; {hoverEdge.edge.failedCalls} failed</div>
+            <div className="mono">
               {hoverEdge.edge.totalCalls > 0 ? Math.round((hoverEdge.edge.failedCalls / hoverEdge.edge.totalCalls) * 100) : 0}%
-              error rate &middot; {Math.round(hoverEdge.edge.confidence * 100)}% confidence
+              error &middot; {Math.round(hoverEdge.edge.confidence * 100)}% confidence
             </div>
             {hoverEdge.edge.lastObservedAt && (
-              <div className="chart-tooltip-muted">{new Date(hoverEdge.edge.lastObservedAt).toLocaleTimeString()}</div>
+              <div className="chart-tooltip-muted mono">{new Date(hoverEdge.edge.lastObservedAt).toLocaleTimeString()}</div>
             )}
           </Tooltip>
         )}
@@ -392,17 +433,17 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
             <div className="chart-tooltip-time">{hoverNode.id}</div>
             {metrics ? (
               <>
-                <div>CPU {fmtPercent(metrics.cpu[hoverNode.id])} &middot; Mem {fmtMb(metrics.memory[hoverNode.id])}</div>
-                <div>{fmtRate(metrics.requestRate[hoverNode.id])} &middot; err {fmtRate(metrics.errorRate[hoverNode.id])}</div>
-                <div>P95 {fmtMs(metrics.latencyP95[hoverNode.id])}</div>
+                <div className="mono">CPU {fmtPercent(metrics.cpu[hoverNode.id])} &middot; Mem {fmtMb(metrics.memory[hoverNode.id])}</div>
+                <div className="mono">{fmtRate(metrics.requestRate[hoverNode.id])} &middot; err {fmtErrPct(metrics.errorRate[hoverNode.id], metrics.requestRate[hoverNode.id])}</div>
+                <div className="mono">P95 {fmtMs(metrics.latencyP95[hoverNode.id])}</div>
               </>
             ) : (
               (() => {
                 const stats = computeNodeStats(hoverNode.id, graph.edges);
                 return (
                   <>
-                    <div>{stats.incomingCount} in / {stats.outgoingCount} out deps</div>
-                    <div>{stats.totalIn} calls in, {stats.totalOut} out</div>
+                    <div className="mono">{stats.incomingCount} in / {stats.outgoingCount} out deps</div>
+                    <div className="mono">{stats.totalIn} calls in, {stats.totalOut} out</div>
                   </>
                 );
               })()
