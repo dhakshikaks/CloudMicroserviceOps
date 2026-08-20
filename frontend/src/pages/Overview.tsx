@@ -86,8 +86,58 @@ export default function Overview() {
         latencyP95={metrics.data?.latencyP95 ?? null}
       />
 
+      <div className="overview-section">
+        <h2 className="section-title">Service Operations — 5 Monitored Services</h2>
+        <div className="services-grid-cards" style={{ marginTop: "0.5rem" }}>
+          {["user-service", "order-service", "payment-service", "inventory-service", "backend"].map((svc) => {
+            const isUp = health.data?.[svc] !== false;
+            const cpu = metrics.data?.cpu?.[svc];
+            const mem = metrics.data?.memory?.[svc];
+            const req = metrics.data?.requestRate?.[svc];
+            const lat = metrics.data?.latencyP95?.[svc];
+            const err = metrics.data?.errorRate?.[svc];
+
+            return (
+              <div className={`service-card${!isUp || (err && err > 0) ? " is-degraded" : ""}`} key={svc}>
+                <div className="service-card-header">
+                  <span className="service-card-title">{svc}</span>
+                  <span className={`status-badge status-${isUp ? "up" : "down"}`}>
+                    <span className="status-dot" />
+                    {isUp ? "UP" : "DOWN"}
+                  </span>
+                </div>
+                <div className="service-card-metrics">
+                  <div>
+                    <div className="service-card-metric-label">CPU</div>
+                    <div className="service-card-metric-value">{cpu !== undefined ? `${cpu.toFixed(1)}%` : "—"}</div>
+                  </div>
+                  <div>
+                    <div className="service-card-metric-label">Memory</div>
+                    <div className="service-card-metric-value">{mem !== undefined ? `${mem.toFixed(0)} MB` : "—"}</div>
+                  </div>
+                  <div>
+                    <div className="service-card-metric-label">Throughput</div>
+                    <div className="service-card-metric-value">{req !== undefined ? `${req.toFixed(1)}/s` : "—"}</div>
+                  </div>
+                  <div>
+                    <div className="service-card-metric-label">Latency P95</div>
+                    <div className="service-card-metric-value">{lat !== undefined ? `${(lat * 1000).toFixed(0)}ms` : "—"}</div>
+                  </div>
+                  <div>
+                    <div className="service-card-metric-label">Error Rate</div>
+                    <div className={`service-card-metric-value${err && err > 0 ? " critical" : ""}`}>
+                      {err !== undefined ? `${err.toFixed(2)}/s` : "—"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="overview-section overview-topology-section">
-        <h2 className="section-title">Topology — live call graph</h2>
+        <h2 className="section-title">Topology — Live Call Graph</h2>
         <DependencyGraphPanel graph={graph.data} loading={graph.loading} error={graph.error} metrics={metrics.data} />
       </div>
 
