@@ -1,55 +1,60 @@
 /* =====================================================================
    CloudMicroserviceOps — Design System
-   Strictly monochrome (black / white / grayscale). State is communicated
-   through weight, borders, and invert — never hue.
+   Dark, native system-utility chrome (macOS Activity Monitor DNA):
+   flat hairline-divided panes, a segmented tab control, dense tabular
+   data, translucent toolbar. Strictly monochrome — state is communicated
+   through weight, borders, and invert (light-on-dark), never hue.
    ===================================================================== */
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
   /* Surfaces */
-  --bg-page: #fafafa;
-  --bg-surface: #ffffff;
-  --bg-surface-raised: #f5f5f5;
-  --bg-hover: #efefef;
-  --bg-pressed: #e7e7e7;
+  --bg-page: #1c1c1e;
+  --bg-surface: #232325;
+  --bg-surface-raised: #2a2a2c;
+  --bg-hover: #333335;
+  --bg-pressed: #3d3d40;
+  --bg-inset: #161617;
+  --bg-segment-active: #58585c;
+  --bg-chrome: rgba(28, 28, 30, 0.72);
 
-  /* Borders */
-  --border: #e6e6e6;
-  --border-strong: #d4d4d4;
-  --border-hairline: #eeeeee;
+  /* Borders (hairlines — translucent white, not opaque gray) */
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.17);
+  --border-hairline: rgba(255, 255, 255, 0.06);
 
   /* Text */
-  --text-primary: #0a0a0a;
-  --text-secondary: #4a4a4a;
-  --text-muted: #8a8a8a;
-  --text-faint: #b5b5b5;
+  --text-primary: #f3f3f4;
+  --text-secondary: #b4b4b8;
+  --text-muted: #8a8a8e;
+  --text-faint: #626266;
   --text-inverse: #ffffff;
-  --text-inverse-muted: #a3a3a3;
 
-  /* Emphasis (used in place of a "critical" hue — full black invert, the
-     strongest thing on the page) */
-  --emphasis-bg: #0a0a0a;
-  --emphasis-border: #0a0a0a;
-  --emphasis-text: #0a0a0a;
+  /* Invert emphasis — the single loudest thing in a view: light fill,
+     dark text (the dark-mode equivalent of a full-black invert) */
+  --invert-bg: #f2f2f3;
+  --invert-fg: #131315;
+  --invert-fg-muted: #5a5a5e;
+  --invert-border: #f2f2f3;
 
   --radius: 8px;
   --radius-sm: 5px;
-  --radius-lg: 12px;
+  --radius-lg: 10px;
   --radius-pill: 999px;
 
-  --shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.03);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.16);
+  --shadow-xs: none;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 16px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 24px 70px rgba(0, 0, 0, 0.65);
 
-  --transition: 140ms cubic-bezier(0.2, 0, 0, 1);
+  --transition: 130ms cubic-bezier(0.2, 0, 0, 1);
   --transition-fast: 90ms ease-out;
 
-  --sidebar-width: 252px;
+  --sidebar-width: 244px;
   --content-max: 1560px;
 
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, monospace;
 
   font-family: var(--font-sans);
@@ -71,8 +76,8 @@ body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 13.5px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.48;
   letter-spacing: -0.006em;
 }
 
@@ -80,8 +85,8 @@ h1,
 h2,
 h3,
 h4 {
-  font-weight: 700;
-  letter-spacing: -0.015em;
+  font-weight: 600;
+  letter-spacing: -0.012em;
   color: var(--text-primary);
   margin: 0;
 }
@@ -116,14 +121,18 @@ ol {
   margin: 0;
 }
 
+select {
+  color-scheme: dark;
+}
+
 ::selection {
-  background: #0a0a0a;
-  color: #ffffff;
+  background: #f2f2f3;
+  color: #131315;
 }
 
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
 }
 
 ::-webkit-scrollbar-track {
@@ -131,13 +140,13 @@ ol {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
+  background: rgba(255, 255, 255, 0.16);
   border-radius: 999px;
-  border: 2.5px solid var(--bg-page);
+  border: 3px solid var(--bg-page);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #b8b8b8;
+  background: rgba(255, 255, 255, 0.26);
 }
 
 /* ---------------- App shell layout ---------------- */
@@ -159,11 +168,13 @@ ol {
 .topbar {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  height: 56px;
-  padding: 0 1.75rem;
+  gap: 1.25rem;
+  height: 52px;
+  padding: 0 1.5rem;
   border-bottom: 1px solid var(--border);
-  background: var(--bg-surface);
+  background: var(--bg-chrome);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
   position: sticky;
   top: 0;
   z-index: 20;
@@ -172,12 +183,13 @@ ol {
 .topbar-live {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--text-primary);
+  gap: 0.45rem;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
   font-family: var(--font-mono);
+  text-transform: uppercase;
 }
 
 .live-dot {
@@ -204,34 +216,40 @@ ol {
   }
 }
 
-.topbar-window {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
+/* ---------------- Segmented control (native tab switcher) ---------------- */
 
-.topbar-window select {
-  background: var(--bg-surface);
+.segmented-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  background: var(--bg-inset);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  padding: 0.32rem 0.6rem;
-  font-size: 0.75rem;
+  padding: 2px;
+}
+
+.segmented-control-item {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.71rem;
+  font-weight: 500;
+  padding: 0.28rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
   font-family: var(--font-mono);
-  outline: none;
-  transition: border-color var(--transition);
-  appearance: none;
+  line-height: 1.2;
 }
 
-.topbar-window select:hover {
-  border-color: var(--border-strong);
+.segmented-control-item:hover {
+  color: var(--text-primary);
 }
 
-.topbar-window select:focus-visible {
-  border-color: var(--text-primary);
+.segmented-control-item.active {
+  background: var(--bg-segment-active);
+  color: var(--text-primary);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
 }
 
 .topbar-spacer {
@@ -241,13 +259,13 @@ ol {
 .topbar-search {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  background: var(--bg-surface-raised);
-  border: 1px solid transparent;
+  gap: 0.55rem;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-muted);
-  padding: 0.4rem 0.65rem;
-  font-size: 0.78rem;
+  padding: 0.36rem 0.65rem;
+  font-size: 0.77rem;
   cursor: pointer;
   transition: border-color var(--transition), color var(--transition), background var(--transition);
   min-width: 220px;
@@ -256,7 +274,6 @@ ol {
 .topbar-search:hover {
   color: var(--text-primary);
   border-color: var(--border-strong);
-  background: var(--bg-surface);
 }
 
 .topbar-search span {
@@ -266,11 +283,11 @@ ol {
 
 .topbar-search kbd {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
-  background: var(--bg-surface);
+  font-size: 0.64rem;
+  background: var(--bg-surface-raised);
   border: 1px solid var(--border);
   border-radius: 3px;
-  padding: 0.08rem 0.35rem;
+  padding: 0.05rem 0.35rem;
   color: var(--text-muted);
 }
 
@@ -279,8 +296,8 @@ ol {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
@@ -292,8 +309,7 @@ ol {
 
 .topbar-icon-btn:hover {
   color: var(--text-primary);
-  background: var(--bg-surface-raised);
-  border-color: var(--border);
+  background: var(--bg-hover);
 }
 
 .topbar-icon-btn .badge-count {
@@ -304,15 +320,15 @@ ol {
   height: 15px;
   padding: 0 3.5px;
   border-radius: 999px;
-  background: var(--text-primary);
-  color: #ffffff;
+  background: var(--invert-bg);
+  color: var(--invert-fg);
   font-size: 0.58rem;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
-  border: 1.5px solid var(--bg-surface);
+  border: 1.5px solid var(--bg-page);
 }
 
 /* ---------------- Sidebar navigation ---------------- */
@@ -333,15 +349,15 @@ ol {
 .sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0 1.25rem;
-  height: 56px;
+  gap: 0.6rem;
+  padding: 0 1.1rem;
+  height: 52px;
   border-bottom: 1px solid var(--border);
 }
 
 .sidebar-mark {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 5px;
   background: var(--text-primary);
   flex-shrink: 0;
@@ -355,7 +371,7 @@ ol {
 }
 
 .sidebar-brand-name {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: -0.015em;
   color: var(--text-primary);
@@ -365,18 +381,18 @@ ol {
 }
 
 .sidebar-brand-tag {
-  font-size: 0.6rem;
-  color: var(--text-muted);
+  font-size: 0.59rem;
+  color: var(--text-faint);
   text-transform: uppercase;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.08em;
   font-family: var(--font-mono);
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 1.35rem;
-  padding: 1.25rem 0.9rem;
+  gap: 1.3rem;
+  padding: 1rem 0.7rem;
   flex: 1;
   overflow-y: auto;
 }
@@ -384,42 +400,41 @@ ol {
 .sidebar-section {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.05rem;
 }
 
 .sidebar-section-heading {
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.11em;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-faint);
-  padding: 0 0.65rem;
-  margin-bottom: 0.4rem;
+  padding: 0 0.6rem;
+  margin-bottom: 0.35rem;
   font-family: var(--font-mono);
 }
 
 .sidebar-link {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.5rem 0.65rem;
+  gap: 0.6rem;
+  padding: 0.42rem 0.6rem;
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
   text-decoration: none;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 500;
-  border-left: 2px solid transparent;
   cursor: pointer;
-  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  transition: background var(--transition), color var(--transition);
   background: none;
+  border: none;
   text-align: left;
   width: 100%;
-  position: relative;
 }
 
 .sidebar-link-icon {
   flex-shrink: 0;
-  opacity: 0.6;
+  opacity: 0.62;
   transition: opacity var(--transition);
 }
 
@@ -428,30 +443,29 @@ ol {
 }
 
 .sidebar-link:hover {
-  background: var(--bg-surface-raised);
+  background: var(--bg-hover);
   color: var(--text-primary);
 }
 
 .sidebar-link.active {
   background: var(--bg-surface-raised);
   color: var(--text-primary);
-  border-left-color: var(--text-primary);
   font-weight: 600;
 }
 
 .sidebar-footer {
   border-top: 1px solid var(--border);
-  padding: 0.9rem 1.1rem;
+  padding: 0.85rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.7rem;
 }
 
 .system-pulse {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.65rem;
+  gap: 0.48rem;
+  font-size: 0.63rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--text-muted);
@@ -471,7 +485,7 @@ ol {
 }
 
 .system-pulse-dot.bad {
-  background: var(--text-primary);
+  background: var(--invert-bg);
   box-shadow: 0 0 0 3px var(--bg-surface-raised);
 }
 
@@ -489,7 +503,7 @@ ol {
 }
 
 .sidebar-user-name {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--text-primary);
   overflow: hidden;
@@ -498,8 +512,8 @@ ol {
 }
 
 .sidebar-user-role {
-  font-size: 0.63rem;
-  color: var(--text-muted);
+  font-size: 0.62rem;
+  color: var(--text-faint);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-family: var(--font-mono);
@@ -510,8 +524,8 @@ ol {
   border: 1px solid var(--border);
   color: var(--text-secondary);
   border-radius: var(--radius-sm);
-  padding: 0.35rem 0.45rem;
-  font-size: 0.72rem;
+  padding: 0.32rem 0.42rem;
+  font-size: 0.71rem;
   cursor: pointer;
   transition: background var(--transition), color var(--transition), border-color var(--transition);
   flex-shrink: 0;
@@ -521,9 +535,9 @@ ol {
 }
 
 .logout-button:hover {
-  background: var(--text-primary);
-  color: #ffffff;
-  border-color: var(--text-primary);
+  background: var(--invert-bg);
+  color: var(--invert-fg);
+  border-color: var(--invert-bg);
 }
 
 /* ---------------- Main content layout ---------------- */
@@ -531,13 +545,13 @@ ol {
 .app-main {
   flex: 1;
   min-width: 0;
-  padding: 2rem 2.25rem 3rem;
+  padding: 1.75rem 2.1rem 3rem;
 }
 
 .page {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
+  gap: 1.6rem;
   max-width: var(--content-max);
   margin: 0 auto;
 }
@@ -547,12 +561,12 @@ ol {
   align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
-  padding-bottom: 1.1rem;
+  padding-bottom: 1rem;
   border-bottom: 1px solid var(--border);
 }
 
 .page-header h1 {
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -560,7 +574,7 @@ ol {
 .page-header p {
   margin: 0;
   color: var(--text-muted);
-  font-size: 0.82rem;
+  font-size: 0.79rem;
 }
 
 .panel-header-row {
@@ -572,7 +586,7 @@ ol {
 }
 
 .panel-header-link {
-  font-size: 0.76rem;
+  font-size: 0.75rem;
   color: var(--text-primary);
   text-decoration: none;
   white-space: nowrap;
@@ -587,7 +601,7 @@ ol {
 }
 
 .last-updated {
-  font-size: 0.7rem;
+  font-size: 0.69rem;
   color: var(--text-faint);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -595,8 +609,8 @@ ol {
 }
 
 .section-title {
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: 0.67rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.09em;
   color: var(--text-muted);
@@ -627,13 +641,13 @@ ol {
   display: block;
 }
 
-/* ---------------- Panel primitive ---------------- */
+/* ---------------- Panel primitive (flat pane, hairline border) ---------------- */
 
 .panel {
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 1.35rem 1.5rem;
+  padding: 1.25rem 1.4rem;
   box-shadow: var(--shadow-xs);
 }
 
@@ -649,16 +663,16 @@ ol {
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1rem 1.1rem;
+  padding: 0.95rem 1.05rem;
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
-  transition: border-color var(--transition), box-shadow var(--transition);
+  gap: 0.65rem;
+  transition: border-color var(--transition), background var(--transition);
 }
 
 .service-card:hover {
   border-color: var(--border-strong);
-  box-shadow: var(--shadow-sm);
+  background: var(--bg-surface-raised);
 }
 
 .service-card.is-degraded {
@@ -676,7 +690,7 @@ ol {
 
 .service-card-title {
   font-weight: 700;
-  font-size: 0.84rem;
+  font-size: 0.83rem;
   font-family: var(--font-mono);
   color: var(--text-primary);
 }
@@ -691,7 +705,7 @@ ol {
 .service-card-metric-label {
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 0.63rem;
+  font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -721,20 +735,20 @@ ol {
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 0.95rem 1.1rem;
+  padding: 0.85rem 1.1rem;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
 .summary-item.tone-critical {
-  border-color: var(--text-primary);
-  border-width: 1.5px;
+  background: var(--bg-surface-raised);
+  border-color: var(--border-strong);
 }
 
 .summary-label {
-  font-size: 0.65rem;
-  font-weight: 700;
+  font-size: 0.63rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
@@ -742,7 +756,7 @@ ol {
 }
 
 .summary-value {
-  font-size: 1.5rem;
+  font-size: 1.45rem;
   font-weight: 700;
   color: var(--text-primary);
   font-family: var(--font-mono);
@@ -756,14 +770,14 @@ ol {
 }
 
 .summary-detail {
-  font-size: 0.71rem;
-  color: var(--text-muted);
+  font-size: 0.7rem;
+  color: var(--text-faint);
 }
 
 /* ---------------- Status badges (monochrome only) ----------------
    Hierarchy is expressed through weight/border/invert, never hue:
    - UP / OK / SUCCESS: outline badge, filled dot
-   - DOWN / FAILURE / ERROR / CRITICAL: full black invert (max emphasis)
+   - DOWN / FAILURE / ERROR / CRITICAL: full light invert (max emphasis)
    - DEGRADED / WARNING: bold outline, hollow dot
    - LIVE: mono uppercase with pulsing dot
    - default / UNKNOWN / HISTORICAL: muted */
@@ -772,14 +786,14 @@ ol {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.2rem 0.55rem;
+  padding: 0.19rem 0.55rem;
   border-radius: var(--radius-pill);
-  font-size: 0.66rem;
-  font-weight: 700;
+  font-size: 0.65rem;
+  font-weight: 600;
   letter-spacing: 0.04em;
   font-family: var(--font-mono);
   border: 1px solid var(--border-strong);
-  background: var(--bg-surface);
+  background: transparent;
   color: var(--text-secondary);
   white-space: nowrap;
 }
@@ -809,21 +823,21 @@ ol {
 .status-badge.status-failure,
 .status-badge.status-error,
 .status-badge.status-critical {
-  background: var(--text-primary);
-  border-color: var(--text-primary);
-  color: #ffffff;
+  background: var(--invert-bg);
+  border-color: var(--invert-bg);
+  color: var(--invert-fg);
 }
 
 .status-badge.status-down .status-dot,
 .status-badge.status-failure .status-dot,
 .status-badge.status-error .status-dot,
 .status-badge.status-critical .status-dot {
-  background: #ffffff;
+  background: var(--invert-fg);
 }
 
 .status-badge.status-degraded,
 .status-badge.status-warning {
-  background: var(--bg-surface);
+  background: transparent;
   border: 1.5px solid var(--text-primary);
   color: var(--text-primary);
 }
@@ -858,7 +872,7 @@ ol {
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 1.5rem 1.6rem;
+  padding: 1.4rem 1.5rem;
   box-shadow: var(--shadow-xs);
 }
 
@@ -868,13 +882,13 @@ ol {
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
-  padding-bottom: 0.85rem;
+  padding-bottom: 0.8rem;
   border-bottom: 1px solid var(--border-hairline);
 }
 
 .dominant-chart-head h2 {
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.77rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
@@ -882,7 +896,7 @@ ol {
 }
 
 .dominant-chart-value {
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--text-primary);
   font-family: var(--font-mono);
@@ -899,17 +913,17 @@ ol {
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 1.2rem 1.3rem;
+  padding: 1.15rem 1.25rem;
   box-shadow: var(--shadow-xs);
 }
 
 .trend-card h3 {
-  font-size: 0.74rem;
-  font-weight: 700;
+  font-size: 0.73rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
-  margin: 0 0 0.9rem;
+  margin: 0 0 0.85rem;
   font-family: var(--font-mono);
 }
 
@@ -927,7 +941,7 @@ ol {
 }
 
 .linechart-grid {
-  stroke: #f0f0f0;
+  stroke: rgba(255, 255, 255, 0.06);
   stroke-dasharray: 2 3;
   stroke-width: 1;
 }
@@ -947,29 +961,29 @@ ol {
 .linechart-line {
   fill: none;
   stroke: var(--text-primary);
-  stroke-width: 1.6;
+  stroke-width: 1.5;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
 
 .linechart.tone-critical .linechart-line {
   stroke: var(--text-primary);
-  stroke-width: 2.1;
+  stroke-width: 2;
 }
 
 .linechart-area {
-  fill: rgba(10, 10, 10, 0.045);
+  fill: rgba(255, 255, 255, 0.055);
 }
 
 .linechart.tone-critical .linechart-area {
-  fill: rgba(10, 10, 10, 0.09);
+  fill: rgba(255, 255, 255, 0.1);
 }
 
 .linechart-live-ring {
   fill: none;
   stroke: var(--text-primary);
   stroke-width: 1;
-  opacity: 0.35;
+  opacity: 0.4;
 }
 
 .linechart-live-dot {
@@ -984,7 +998,7 @@ ol {
 
 .linechart-dot {
   fill: var(--text-primary);
-  stroke: #ffffff;
+  stroke: var(--bg-surface);
   stroke-width: 1.5;
 }
 
@@ -995,7 +1009,7 @@ ol {
   color: var(--text-faint);
   font-size: 0.75rem;
   font-family: var(--font-mono);
-  background: var(--bg-surface-raised);
+  background: var(--bg-inset);
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius-sm);
   text-align: center;
@@ -1012,20 +1026,20 @@ ol {
 .sparkline-line {
   fill: none;
   stroke: var(--text-primary);
-  stroke-width: 1.5;
+  stroke-width: 1.4;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
 
 .sparkline.tone-warning .sparkline-line {
   stroke: var(--text-primary);
-  stroke-width: 2;
+  stroke-width: 1.9;
   stroke-dasharray: 3 2;
 }
 
 .sparkline.tone-critical .sparkline-line {
   stroke: var(--text-primary);
-  stroke-width: 2.25;
+  stroke-width: 2.15;
 }
 
 .sparkline-empty {
@@ -1044,7 +1058,7 @@ ol {
   z-index: 100;
   pointer-events: none;
   transform: translate(-50%, -100%) translateY(-8px);
-  background: #0a0a0a;
+  background: #38383a;
   color: #ffffff;
   padding: 0.5rem 0.7rem;
   border-radius: var(--radius-sm);
@@ -1052,11 +1066,12 @@ ol {
   line-height: 1.4;
   box-shadow: var(--shadow-md);
   white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .chart-tooltip-time {
   font-size: 0.65rem;
-  color: #a3a3a3;
+  color: #a3a3a6;
   font-family: var(--font-mono);
   margin-bottom: 0.2rem;
 }
@@ -1069,7 +1084,7 @@ ol {
 
 .chart-tooltip-muted {
   font-size: 0.65rem;
-  color: #8a8a8a;
+  color: #8e8e92;
 }
 
 /* ---------------- Topology graph ---------------- */
@@ -1081,7 +1096,7 @@ ol {
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 1.35rem 1.5rem;
+  padding: 1.3rem 1.45rem;
   box-shadow: var(--shadow-xs);
 }
 
@@ -1096,13 +1111,13 @@ ol {
 }
 
 .topology-alltime-badge {
-  font-size: 0.65rem;
-  font-weight: 700;
+  font-size: 0.64rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
   font-family: var(--font-mono);
-  background: var(--bg-surface-raised);
+  background: var(--bg-inset);
   border: 1px solid var(--border);
   padding: 0.15rem 0.5rem;
   border-radius: var(--radius-pill);
@@ -1110,12 +1125,12 @@ ol {
 
 .topology-canvas {
   position: relative;
-  background: #fcfcfc;
+  background: #161618;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
   user-select: none;
-  background-image: radial-gradient(circle, #e9e9e9 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
   background-size: 22px 22px;
 }
 
@@ -1129,7 +1144,7 @@ ol {
   border-radius: 0;
   height: 100vh !important;
   width: 100vw !important;
-  background-color: #ffffff;
+  background-color: #161618;
 }
 
 .topology-toolbar {
@@ -1139,8 +1154,8 @@ ol {
   z-index: 10;
   display: flex;
   gap: 2px;
-  background: #ffffff;
-  border: 1px solid var(--border);
+  background: #2c2c2e;
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   padding: 3px;
   box-shadow: var(--shadow-sm);
@@ -1161,7 +1176,7 @@ ol {
 }
 
 .topology-toolbar button:hover {
-  background: var(--bg-surface-raised);
+  background: var(--bg-hover);
   color: var(--text-primary);
 }
 
@@ -1177,7 +1192,7 @@ ol {
 
 .topology-edge {
   fill: none;
-  stroke: #d0d0d0;
+  stroke: rgba(255, 255, 255, 0.22);
   transition: stroke var(--transition);
 }
 
@@ -1187,7 +1202,7 @@ ol {
 }
 
 .topology-arrowhead {
-  fill: #d0d0d0;
+  fill: rgba(255, 255, 255, 0.22);
 }
 
 .topology-arrowhead.failed {
@@ -1203,7 +1218,7 @@ ol {
 }
 
 .topology-edge-label-bg {
-  fill: #ffffff;
+  fill: #232325;
   stroke: var(--border);
   stroke-width: 1;
   rx: 3;
@@ -1225,7 +1240,7 @@ ol {
 }
 
 .topology-node-rect {
-  fill: #ffffff;
+  fill: #232325;
   stroke: var(--border-strong);
   stroke-width: 1.25;
   transition: stroke var(--transition), stroke-width var(--transition);
@@ -1243,7 +1258,7 @@ ol {
 .topology-node-rect.degraded {
   stroke: var(--text-primary);
   stroke-width: 2;
-  fill: #fafafa;
+  fill: #2a2a2c;
 }
 
 .topology-node-hatch {
@@ -1305,7 +1320,7 @@ ol {
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  background: var(--bg-surface-raised);
+  background: var(--bg-inset);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 0.65rem 1.1rem;
@@ -1370,23 +1385,23 @@ ol {
 }
 
 .explorer-list-item:hover {
-  background: var(--bg-surface-raised);
+  background: var(--bg-hover);
 }
 
 .explorer-list-item.active {
-  background: var(--text-primary);
-  border-color: var(--text-primary);
-  color: #ffffff;
+  background: var(--invert-bg);
+  border-color: var(--invert-bg);
+  color: var(--invert-fg);
 }
 
 .explorer-list-item.active .status-badge {
   background: transparent;
-  border-color: rgba(255, 255, 255, 0.4);
-  color: #ffffff;
+  border-color: rgba(19, 19, 21, 0.35);
+  color: var(--invert-fg);
 }
 
 .explorer-list-item.active .status-badge .status-dot {
-  background: #ffffff;
+  background: var(--invert-fg);
 }
 
 .explorer-center {
@@ -1410,8 +1425,8 @@ ol {
 }
 
 .service-inspector-eyebrow {
-  font-size: 0.63rem;
-  font-weight: 700;
+  font-size: 0.62rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.09em;
   color: var(--text-muted);
@@ -1421,7 +1436,7 @@ ol {
 }
 
 .explorer-center-name {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 700;
   font-family: var(--font-mono);
   color: var(--text-primary);
@@ -1443,8 +1458,8 @@ ol {
 }
 
 .service-inspector-section h3 {
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: 0.67rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
@@ -1495,7 +1510,7 @@ ol {
 
 .cell-elevated {
   color: var(--text-primary);
-  font-weight: 800;
+  font-weight: 700;
   text-decoration: underline;
   text-decoration-thickness: 1.5px;
   text-underline-offset: 2px;
@@ -1524,8 +1539,8 @@ ol {
   background: var(--bg-surface-raised);
   border-bottom: 1px solid var(--border);
   padding: 0.55rem 0.85rem;
-  font-size: 0.66rem;
-  font-weight: 700;
+  font-size: 0.65rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--text-muted);
@@ -1560,7 +1575,7 @@ ol {
   justify-content: center;
 }
 
-/* ---------------- Data tables ---------------- */
+/* ---------------- Data tables (dense, native list style) ---------------- */
 
 .table-wrap {
   width: 100%;
@@ -1573,14 +1588,14 @@ ol {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 0.79rem;
+  font-size: 0.78rem;
 }
 
 .data-table th {
   background: var(--bg-surface-raised);
-  padding: 0.65rem 0.85rem;
-  font-size: 0.66rem;
-  font-weight: 700;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.64rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
@@ -1606,7 +1621,7 @@ ol {
 }
 
 .data-table td {
-  padding: 0.6rem 0.85rem;
+  padding: 0.5rem 0.85rem;
   border-bottom: 1px solid var(--border-hairline);
   color: var(--text-primary);
   font-family: var(--font-mono);
@@ -1641,10 +1656,10 @@ ol {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--bg-surface);
+  background: var(--bg-inset);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 0.4rem 0.7rem;
+  padding: 0.38rem 0.7rem;
   width: 280px;
   color: var(--text-muted);
   transition: border-color var(--transition);
@@ -1681,12 +1696,12 @@ ol {
 }
 
 .events-filters select {
-  background: var(--bg-surface);
+  background: var(--bg-inset);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  padding: 0.4rem 0.6rem;
-  font-size: 0.78rem;
+  padding: 0.38rem 0.6rem;
+  font-size: 0.77rem;
   font-family: var(--font-mono);
   outline: none;
   transition: border-color var(--transition);
@@ -1710,8 +1725,8 @@ ol {
 }
 
 .rca-state-label {
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: 0.67rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-family: var(--font-mono);
@@ -1740,25 +1755,25 @@ ol {
   flex-direction: column;
   gap: 0.5rem;
   padding: 1.1rem 1.2rem;
-  background: var(--text-primary);
-  border: 1px solid var(--text-primary);
+  background: var(--invert-bg);
+  border: 1px solid var(--invert-bg);
   border-radius: var(--radius);
-  color: #ffffff;
+  color: var(--invert-fg);
 }
 
 .rca-highlight .rca-state-label.tone-critical {
-  color: #ffffff;
+  color: var(--invert-fg);
 }
 
 .rca-highlight .rca-highlight-reason {
-  color: var(--text-inverse-muted);
+  color: var(--invert-fg-muted);
 }
 
 .rca-highlight-service {
   font-size: 1.35rem;
   font-weight: 700;
   font-family: var(--font-mono);
-  color: #ffffff;
+  color: var(--invert-fg);
   letter-spacing: -0.01em;
 }
 
@@ -1768,7 +1783,7 @@ ol {
   gap: 1.1rem 1.75rem;
   margin-top: 0.4rem;
   padding-top: 0.65rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-top: 1px solid rgba(19, 19, 21, 0.14);
 }
 
 .rca-highlight-metric {
@@ -1779,9 +1794,9 @@ ol {
 
 .rca-highlight-metric-label {
   font-size: 0.62rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  color: var(--text-inverse-muted);
+  color: var(--invert-fg-muted);
   font-family: var(--font-mono);
 }
 
@@ -1789,7 +1804,7 @@ ol {
   font-size: 0.9rem;
   font-weight: 700;
   font-family: var(--font-mono);
-  color: #ffffff;
+  color: var(--invert-fg);
 }
 
 .rca-list {
@@ -1848,38 +1863,38 @@ ol {
   align-items: baseline;
   gap: 0.85rem;
   padding: 0.85rem 1.1rem;
-  background: var(--text-primary);
-  border: 1px solid var(--text-primary);
+  background: var(--invert-bg);
+  border: 1px solid var(--invert-bg);
   border-radius: var(--radius);
   margin-bottom: 0;
-  color: #ffffff;
+  color: var(--invert-fg);
   flex-wrap: wrap;
 }
 
 .incident-header-label {
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: 0.67rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-inverse-muted);
+  color: var(--invert-fg-muted);
   font-family: var(--font-mono);
 }
 
 .incident-header-id {
   font-family: var(--font-mono);
   font-weight: 700;
-  color: var(--text-inverse-muted);
+  color: var(--invert-fg-muted);
 }
 
 .incident-header-service {
   font-size: 1.15rem;
   font-weight: 700;
   font-family: var(--font-mono);
-  color: #ffffff;
+  color: var(--invert-fg);
 }
 
 .incident-header .cell-muted {
-  color: var(--text-inverse-muted);
+  color: var(--invert-fg-muted);
 }
 
 .incident-meta-row {
@@ -1908,8 +1923,8 @@ ol {
 }
 
 .incident-why-label {
-  font-size: 0.74rem;
-  font-weight: 700;
+  font-size: 0.73rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
@@ -1918,7 +1933,7 @@ ol {
 }
 
 .incident-why-body {
-  font-size: 0.9rem;
+  font-size: 0.89rem;
   margin: 0 0 0.7rem;
   color: var(--text-primary);
   line-height: 1.55;
@@ -1939,7 +1954,7 @@ ol {
 }
 
 .incident-confidence-value {
-  font-weight: 800;
+  font-weight: 700;
   font-size: 0.95rem;
   color: var(--text-primary);
 }
@@ -1952,8 +1967,8 @@ ol {
 }
 
 .incident-impact-col h4 {
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: 0.67rem;
+  font-weight: 600;
   text-transform: uppercase;
   color: var(--text-muted);
   font-family: var(--font-mono);
@@ -1971,7 +1986,7 @@ ol {
 
 .incident-impact-list li {
   padding: 0.4rem 0.6rem;
-  background: var(--bg-surface-raised);
+  background: var(--bg-inset);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: 0.76rem;
@@ -1987,7 +2002,7 @@ ol {
 
 .dependency-path-node {
   padding: 0.4rem 0.85rem;
-  background: var(--bg-surface-raised);
+  background: var(--bg-inset);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
@@ -1996,9 +2011,9 @@ ol {
 }
 
 .dependency-path-node.is-affected {
-  background: var(--text-primary);
-  border-color: var(--text-primary);
-  color: #ffffff;
+  background: var(--invert-bg);
+  border-color: var(--invert-bg);
+  color: var(--invert-fg);
 }
 
 .dependency-path-arrow {
@@ -2020,7 +2035,7 @@ ol {
   align-items: center;
   gap: 0.85rem;
   padding: 0.55rem 0.85rem;
-  background: var(--bg-surface-raised);
+  background: var(--bg-inset);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: 0.78rem;
@@ -2069,7 +2084,7 @@ ol {
 
 .incident-explore-control select {
   padding: 0.32rem 0.6rem;
-  background: var(--bg-surface);
+  background: var(--bg-inset);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
@@ -2116,22 +2131,22 @@ ol {
 
 .report-type-btn:hover {
   border-color: var(--border-strong);
-  background: var(--bg-surface-raised);
+  background: var(--bg-hover);
 }
 
 .report-type-btn.active {
-  background: var(--text-primary);
-  border-color: var(--text-primary);
+  background: var(--invert-bg);
+  border-color: var(--invert-bg);
 }
 
 .report-type-btn-title {
-  font-size: 0.82rem;
+  font-size: 0.81rem;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .report-type-btn.active .report-type-btn-title {
-  color: #ffffff;
+  color: var(--invert-fg);
 }
 
 .report-type-btn-desc {
@@ -2141,7 +2156,7 @@ ol {
 }
 
 .report-type-btn.active .report-type-btn-desc {
-  color: var(--text-inverse-muted);
+  color: var(--invert-fg-muted);
 }
 
 .report-generate-action {
@@ -2152,12 +2167,12 @@ ol {
 }
 
 .report-generate-btn {
-  padding: 0.6rem 1.4rem;
-  background: var(--text-primary);
-  color: #ffffff;
-  border: 1px solid var(--text-primary);
+  padding: 0.58rem 1.4rem;
+  background: var(--invert-bg);
+  color: var(--invert-fg);
+  border: 1px solid var(--invert-bg);
   border-radius: var(--radius-sm);
-  font-size: 0.8rem;
+  font-size: 0.79rem;
   font-weight: 600;
   cursor: pointer;
   transition: opacity var(--transition);
@@ -2168,7 +2183,7 @@ ol {
 }
 
 .report-generate-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
@@ -2191,8 +2206,8 @@ ol {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.45rem 0.85rem;
-  background: var(--bg-surface);
+  padding: 0.44rem 0.85rem;
+  background: var(--bg-inset);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: 0.76rem;
@@ -2203,13 +2218,13 @@ ol {
 }
 
 .report-actions-bar button:hover {
-  background: var(--text-primary);
-  color: #ffffff;
-  border-color: var(--text-primary);
+  background: var(--invert-bg);
+  color: var(--invert-fg);
+  border-color: var(--invert-bg);
 }
 
 .report-preview {
-  background: #ffffff;
+  background: #1a1a1c;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1.75rem;
@@ -2223,7 +2238,7 @@ ol {
 }
 
 .report-preview-masthead h2 {
-  font-size: 1.15rem;
+  font-size: 1.12rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: -0.01em;
@@ -2246,7 +2261,7 @@ ol {
 
 .report-preview-section h3 {
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
@@ -2314,10 +2329,10 @@ ol {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.7rem 1rem;
+  padding: 0.65rem 1rem;
   border-bottom: 1px solid var(--border-hairline);
   font-family: var(--font-mono);
-  font-size: 0.82rem;
+  font-size: 0.81rem;
   background: var(--bg-surface);
 }
 
@@ -2325,7 +2340,7 @@ ol {
   border-bottom: none;
 }
 
-/* ---------------- System Health / dead-code panels (kept for parity) ---------------- */
+/* ---------------- Auxiliary panels (kept for parity) ---------------- */
 
 .health-grid {
   display: grid;
@@ -2343,11 +2358,12 @@ ol {
   gap: 0.5rem;
   text-align: left;
   cursor: pointer;
-  transition: border-color var(--transition);
+  transition: border-color var(--transition), background var(--transition);
 }
 
 .health-card:hover {
   border-color: var(--border-strong);
+  background: var(--bg-surface-raised);
 }
 
 .health-card-top {
@@ -2409,7 +2425,7 @@ ol {
 
 .stat-label {
   font-size: 0.65rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
@@ -2435,20 +2451,20 @@ ol {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: var(--bg-page);
+  background: #161618;
   padding: 1.5rem;
-  background-image: radial-gradient(circle, #e8e8e8 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
 .login-card {
   width: 100%;
   max-width: 400px;
-  background: #ffffff;
-  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   padding: 2.25rem;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
 }
 
 .login-brand {
@@ -2502,25 +2518,26 @@ ol {
 
 .login-field label {
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted);
 }
 
 .login-field input {
-  padding: 0.65rem 0.85rem;
+  padding: 0.62rem 0.85rem;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
-  font-size: 0.88rem;
+  font-size: 0.87rem;
   outline: none;
   transition: border-color var(--transition), box-shadow var(--transition);
-  background: var(--bg-surface);
+  background: var(--bg-inset);
+  color: var(--text-primary);
 }
 
 .login-field input:focus {
   border-color: var(--text-primary);
-  box-shadow: 0 0 0 3px rgba(10, 10, 10, 0.06);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
 }
 
 .login-error {
@@ -2535,9 +2552,9 @@ ol {
 }
 
 .login-submit {
-  padding: 0.75rem;
-  background: var(--text-primary);
-  color: #ffffff;
+  padding: 0.72rem;
+  background: var(--invert-bg);
+  color: var(--invert-fg);
   border: none;
   border-radius: var(--radius-sm);
   font-size: 0.85rem;
@@ -2563,8 +2580,8 @@ ol {
 .login-spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #ffffff;
+  border: 2px solid rgba(19, 19, 21, 0.25);
+  border-top-color: var(--invert-fg);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -2580,8 +2597,8 @@ ol {
 .command-palette-scrim {
   position: fixed;
   inset: 0;
-  background: rgba(10, 10, 10, 0.4);
-  backdrop-filter: blur(2px);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
   z-index: 500;
   display: flex;
   justify-content: center;
@@ -2592,7 +2609,7 @@ ol {
   width: 100%;
   max-width: 560px;
   height: fit-content;
-  background: #ffffff;
+  background: #2c2c2e;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
@@ -2631,8 +2648,8 @@ ol {
 }
 
 .command-palette-group-label {
-  font-size: 0.63rem;
-  font-weight: 700;
+  font-size: 0.62rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-faint);
@@ -2658,7 +2675,7 @@ ol {
 
 .command-palette-item:hover,
 .command-palette-item.active {
-  background: var(--bg-surface-raised);
+  background: var(--bg-hover);
 }
 
 .command-palette-empty {
@@ -2673,7 +2690,7 @@ ol {
 .notif-scrim {
   position: fixed;
   inset: 0;
-  background: rgba(10, 10, 10, 0.28);
+  background: rgba(0, 0, 0, 0.45);
   z-index: 500;
 }
 
@@ -2684,8 +2701,8 @@ ol {
   bottom: 0;
   width: 400px;
   max-width: 100vw;
-  background: #ffffff;
-  border-left: 1px solid var(--border);
+  background: #232325;
+  border-left: 1px solid var(--border-strong);
   z-index: 501;
   display: flex;
   flex-direction: column;
@@ -2720,7 +2737,7 @@ ol {
 }
 
 .notif-drawer-close:hover {
-  background: var(--bg-surface-raised);
+  background: var(--bg-hover);
   color: var(--text-primary);
 }
 
@@ -2764,7 +2781,7 @@ ol {
 
 .notif-action-btn {
   padding: 0.35rem 0.65rem;
-  background: var(--bg-surface);
+  background: var(--bg-inset);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: 0.71rem;
@@ -2774,9 +2791,9 @@ ol {
 }
 
 .notif-action-btn:hover {
-  background: var(--text-primary);
-  color: #ffffff;
-  border-color: var(--text-primary);
+  background: var(--invert-bg);
+  color: var(--invert-fg);
+  border-color: var(--invert-bg);
 }
 
 .notif-list {
@@ -2812,7 +2829,7 @@ ol {
 }
 
 .notif-item:hover {
-  background: var(--bg-surface-raised);
+  background: var(--bg-hover);
 }
 
 .notif-item.is-unread {
@@ -2843,8 +2860,8 @@ ol {
 }
 
 .notif-item.type-critical .notif-item-icon {
-  background: var(--text-primary);
-  color: #ffffff;
+  background: var(--invert-bg);
+  color: var(--invert-fg);
 }
 
 .notif-item-body {
@@ -2878,8 +2895,8 @@ ol {
 .service-inspector-scrim {
   position: fixed;
   inset: 0;
-  background: rgba(10, 10, 10, 0.4);
-  backdrop-filter: blur(2px);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
   z-index: 500;
 }
 
@@ -2900,7 +2917,7 @@ ol {
 }
 
 .service-inspector-overlay.as-modal .service-inspector-panel {
-  background: #ffffff;
+  background: #2c2c2e;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
@@ -2952,7 +2969,7 @@ ol {
   justify-content: center;
   width: 30px;
   height: 30px;
-  background: var(--bg-surface-raised);
+  background: var(--bg-inset);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
@@ -2960,9 +2977,9 @@ ol {
 }
 
 .service-inspector-actions button:hover {
-  background: var(--text-primary);
-  color: #ffffff;
-  border-color: var(--text-primary);
+  background: var(--invert-bg);
+  color: var(--invert-fg);
+  border-color: var(--invert-bg);
 }
 
 .inspector-row {
@@ -3006,7 +3023,7 @@ ol {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-  background: var(--bg-surface-raised);
+  background: var(--bg-inset);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 0.65rem 0.75rem;
@@ -3068,7 +3085,7 @@ ol {
   padding: 1.5rem;
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius);
-  background: var(--bg-surface-raised);
+  background: var(--bg-inset);
 }
 
 .explained-empty-state.is-error {
@@ -3106,8 +3123,8 @@ ol {
   align-self: flex-start;
   margin-top: 0.3rem;
   padding: 0.4rem 0.85rem;
-  background: var(--text-primary);
-  color: #ffffff;
+  background: var(--invert-bg);
+  color: var(--invert-fg);
   border: none;
   border-radius: var(--radius-sm);
   font-size: 0.75rem;
@@ -3186,10 +3203,6 @@ ol {
 
   .topbar {
     padding: 0 1rem;
-  }
-
-  .topbar-window {
-    display: none;
   }
 
   .notif-drawer {

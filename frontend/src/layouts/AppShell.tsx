@@ -35,19 +35,19 @@ function AppShellInner() {
             <span className="live-dot" />
             LIVE
           </div>
-          <div className="topbar-window">
-            <label htmlFor="time-window-select">Chart window</label>
-            <select
-              id="time-window-select"
-              value={timeWindow}
-              onChange={(e) => setTimeWindow(e.target.value as typeof timeWindow)}
-            >
-              {TIME_WINDOWS.map((w) => (
-                <option key={w} value={w}>
-                  {w}
-                </option>
-              ))}
-            </select>
+          <div className="segmented-control" role="tablist" aria-label="Chart window">
+            {TIME_WINDOWS.map((w) => (
+              <button
+                key={w}
+                type="button"
+                role="tab"
+                aria-selected={timeWindow === w}
+                className={`segmented-control-item${timeWindow === w ? " active" : ""}`}
+                onClick={() => setTimeWindow(w)}
+              >
+                {w}
+              </button>
+            ))}
           </div>
           <div className="topbar-spacer" />
           <button type="button" className="topbar-search" onClick={() => setPaletteOpen(true)}>
