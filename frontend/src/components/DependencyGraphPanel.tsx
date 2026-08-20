@@ -259,7 +259,7 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
                 </marker>
                 <pattern id="topology-hatch-pattern" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
                   <rect width="8" height="8" fill="transparent" />
-                  <line x1="0" y1="0" x2="0" y2="8" stroke="rgba(255,255,255,0.16)" strokeWidth="3" />
+                  <line x1="0" y1="0" x2="0" y2="8" stroke="rgba(10,10,10,0.09)" strokeWidth="3" />
                 </pattern>
               </defs>
 

@@ -107,16 +107,6 @@ export default function LineChart({
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setHoverIndex(null)}
       >
-        <defs>
-          <linearGradient id="linechart-area-gradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.0" />
-          </linearGradient>
-          <linearGradient id="linechart-critical-area-gradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#ef4444" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#ef4444" stopOpacity="0.0" />
-          </linearGradient>
-        </defs>
         <line x1={padding.left} y1={padding.top} x2={width - padding.right} y2={padding.top} className="linechart-grid" />
         <line
           x1={padding.left}
