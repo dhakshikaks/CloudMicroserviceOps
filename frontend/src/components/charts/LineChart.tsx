@@ -1,4 +1,4 @@
-import { useRef, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import type { RangeSample } from "../../services/api";
 import Tooltip from "./Tooltip";
 
@@ -17,14 +17,32 @@ const DEFAULT_EMPTY_LABEL = "Historical data unavailable - collecting since rest
 /** Single-series line chart with axis labels + hover crosshair, fed by real query_range data. */
 export default function LineChart({
   samples,
-  width = 560,
+  width: propWidth,
   height = 160,
   yFormat = (v) => v.toFixed(2),
   emptyLabel = DEFAULT_EMPTY_LABEL,
   tone = "default",
 }: Props) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(propWidth ?? 800);
+
+  useEffect(() => {
+    if (propWidth) {
+      setContainerWidth(propWidth);
+      return;
+    }
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      if (entries[0] && entries[0].contentRect.width > 0) {
+        setContainerWidth(Math.floor(entries[0].contentRect.width));
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [propWidth]);
 
   if (samples.length < 2) {
     return (
@@ -34,9 +52,10 @@ export default function LineChart({
     );
   }
 
+  const width = propWidth ?? containerWidth;
   const padding = { top: 12, right: 12, bottom: 22, left: 48 };
-  const innerWidth = width - padding.left - padding.right;
-  const innerHeight = height - padding.top - padding.bottom;
+  const innerWidth = Math.max(10, width - padding.left - padding.right);
+  const innerHeight = Math.max(10, height - padding.top - padding.bottom);
 
   const values = samples.map((s) => s.value);
   const min = Math.min(...values);
@@ -77,7 +96,7 @@ export default function LineChart({
   const lastY = yFor(samples[lastIndex].value);
 
   return (
-    <div className="linechart-wrap">
+    <div className="linechart-wrap" ref={containerRef}>
       <svg
         ref={svgRef}
         className={`linechart${tone === "critical" ? " tone-critical" : ""}`}
