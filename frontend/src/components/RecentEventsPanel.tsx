@@ -110,7 +110,7 @@ export default function RecentEventsPanel({
                   key={event.eventId}
                   className={`${onRowClick ? "is-selectable" : ""}${selectedEventId === event.eventId ? " active" : ""}`}
                   onClick={onRowClick ? () => onRowClick(event) : undefined}
-                  style={selectedEventId === event.eventId ? { background: "var(--bg-surface-raised)" } : undefined}
+                  style={selectedEventId === event.eventId ? { background: "var(--accent-blue-soft)" } : undefined}
                 >
                   <td className="cell-muted">
                     <div>{new Date(event.timestamp).toLocaleTimeString()}</div>

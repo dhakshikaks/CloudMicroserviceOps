@@ -109,11 +109,11 @@ export default function Overview() {
                 <div className="service-card-metrics">
                   <div>
                     <div className="service-card-metric-label">CPU</div>
-                    <div className="service-card-metric-value">{cpu !== undefined ? `${cpu.toFixed(1)}%` : "—"}</div>
+                    <div className="service-card-metric-value">{cpu !== undefined ? `${(cpu * 100).toFixed(1)}%` : "—"}</div>
                   </div>
                   <div>
                     <div className="service-card-metric-label">Memory</div>
-                    <div className="service-card-metric-value">{mem !== undefined ? `${mem.toFixed(0)} MB` : "—"}</div>
+                    <div className="service-card-metric-value">{mem !== undefined ? `${(mem / 1024 / 1024).toFixed(1)} MB` : "—"}</div>
                   </div>
                   <div>
                     <div className="service-card-metric-label">Throughput</div>

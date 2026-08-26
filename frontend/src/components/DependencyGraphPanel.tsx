@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type WheelEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowRight, Maximize2, Minimize2, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
-import type { DependencyEdge, DependencyGraphResponse } from "../types";
+import type { DependencyEdge, DependencyGraphResponse, ServiceHealthMap } from "../types";
 import type { RuntimeMetrics } from "./MetricsPanel";
 import SectionState from "./SectionState";
 import Tooltip from "./charts/Tooltip";
@@ -12,8 +12,13 @@ interface Props {
   error: string | null;
   /** Optional: when provided, node cards show real live telemetry inline, not just on hover. */
   metrics?: RuntimeMetrics | null;
+  /** Optional: when provided, a service with up===false renders a real DOWN state
+   * instead of inferring status purely from error rate. */
+  health?: ServiceHealthMap | null;
   /** Floor for the canvas height, e.g. a taller value on a dedicated full-page view. */
   minCanvasHeight?: number;
+  /** Ceiling for the canvas height (default 680) - a dedicated topology page can afford taller. */
+  maxCanvasHeight?: number;
 }
 
 /** Longest-path-from-a-root layering, computed purely from the real edges. */
@@ -109,7 +114,7 @@ function fmtErrPct(errorRate: number | undefined, requestRate: number | undefine
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 3;
 
-export default function DependencyGraphPanel({ graph, loading, error, metrics, minCanvasHeight }: Props) {
+export default function DependencyGraphPanel({ graph, loading, error, metrics, health, minCanvasHeight, maxCanvasHeight = 680 }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -145,7 +150,7 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
   // margin regardless of container size. Vertical padding is kept tight so
   // the node row itself dominates the canvas rather than floating in empty
   // black space above and below it.
-  const canvasHeight = Math.min(680, Math.max(minCanvasHeight ?? 180, totalHeight + 34));
+  const canvasHeight = Math.min(maxCanvasHeight, Math.max(minCanvasHeight ?? 180, totalHeight + 34));
 
   const baseViewBox = { x: -30, y: -17, w: totalWidth + 60, h: totalHeight + 34 };
   const viewBox = {
@@ -231,7 +236,7 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
               <button type="button" title="Zoom out" onClick={() => setZoom((z) => clamp(z - 0.2, MIN_ZOOM, MAX_ZOOM))}>
                 <ZoomOut size={14} />
               </button>
-              <button type="button" title="Reset view" onClick={resetView}>
+              <button type="button" title="Fit to screen / reset" onClick={resetView}>
                 <RotateCcw size={14} />
               </button>
               <button type="button" title={isFullscreen ? "Exit fullscreen" : "Fullscreen"} onClick={toggleFullscreen}>
@@ -261,9 +266,15 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
                   <rect width="8" height="8" fill="transparent" />
                   <line x1="0" y1="0" x2="0" y2="8" stroke="rgba(10,10,10,0.09)" strokeWidth="3" />
                 </pattern>
+                <pattern id="topology-dot-pattern" patternUnits="userSpaceOnUse" width="7" height="7">
+                  <rect width="7" height="7" fill="transparent" />
+                  <circle cx="1.5" cy="1.5" r="1.1" fill="var(--text-primary)" opacity="0.5" />
+                </pattern>
               </defs>
 
-              {graph.edges.map((edge) => {
+              {(() => {
+                const avgCalls = graph.edges.length > 0 ? graph.edges.reduce((s, e) => s + e.totalCalls, 0) / graph.edges.length : 0;
+                return graph.edges.map((edge) => {
                 const from = positions.get(edge.sourceService);
                 const to = positions.get(edge.targetService);
                 if (!from || !to) return null;
@@ -274,6 +285,7 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
                 const midX = (x1 + x2) / 2;
                 const midY = (y1 + y2) / 2;
                 const hasFailures = edge.failedCalls > 0;
+                const isHighTraffic = !hasFailures && edge.totalCalls > avgCalls;
                 const failurePct = edge.totalCalls > 0 ? Math.round((edge.failedCalls / edge.totalCalls) * 100) : 0;
                 const pathId = `edge-${edge.sourceService}-${edge.targetService}`;
                 // Line weight reflects observed traffic volume, within a sane visual range.
@@ -291,7 +303,7 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
                     <path
                       id={pathId}
                       d={pathD}
-                      className={`topology-edge${hasFailures ? " has-failures" : ""}`}
+                      className={`topology-edge${hasFailures ? " has-failures" : ""}${isHighTraffic ? " high-traffic" : ""}`}
                       style={{ strokeWidth }}
                       markerEnd={`url(#${hasFailures ? "topology-arrow-failed" : "topology-arrow"})`}
                     />
@@ -322,7 +334,8 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
                     </text>
                   </g>
                 );
-              })}
+              });
+              })()}
 
               {[...positions.entries()].map(([nodeId, pos]) => {
                 const stats = computeNodeStats(nodeId, graph.edges);
@@ -334,8 +347,34 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
                 const errorRate = metrics?.errorRate[nodeId];
                 const p95 = metrics?.latencyP95[nodeId];
                 const hasErrorSignal = errorRate !== undefined && errorRate > 0;
-                const statusLabel = degraded || hasErrorSignal ? "ERROR" : "UP";
-                const toneClass = degraded ? "critical" : "ok";
+
+                const healthKnown = health ? health[nodeId] : undefined;
+                const metricsKnown = metrics ? metrics.requestRate[nodeId] !== undefined : undefined;
+                const isDown = healthKnown === false;
+                const noData = !isDown && healthKnown === undefined && metricsKnown === undefined;
+                const isDegraded = !isDown && !noData && (degraded || hasErrorSignal);
+
+                let statusLabel: string;
+                let statusSymbol: string;
+                let toneClass: string;
+                if (isDown) {
+                  statusLabel = "DOWN";
+                  statusSymbol = "×";
+                  toneClass = "down";
+                } else if (noData) {
+                  statusLabel = "NO DATA";
+                  statusSymbol = "—";
+                  toneClass = "nodata";
+                } else if (isDegraded) {
+                  statusLabel = "DEGRADED";
+                  statusSymbol = "○";
+                  toneClass = "degraded";
+                } else {
+                  statusLabel = "UP";
+                  statusSymbol = "●";
+                  toneClass = "ok";
+                }
+
                 return (
                   <g
                     key={nodeId}
@@ -350,10 +389,13 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
                       width={NODE_W}
                       height={NODE_H}
                       rx={2}
-                      className={`topology-node-rect${degraded ? " degraded" : ""}${selected ? " selected" : ""}`}
+                      className={`topology-node-rect${isDown ? " down" : isDegraded ? " degraded" : ""}${noData ? " nodata" : ""}${selected ? " selected" : ""}`}
                     />
-                    {degraded && <rect width={NODE_W} height={NODE_H} rx={2} className="topology-node-hatch" />}
-                    <circle cx={16} cy={20} r={4} className={`topology-node-dot ${toneClass}`} />
+                    {isDegraded && <rect width={NODE_W} height={NODE_H} rx={2} className="topology-node-hatch" />}
+                    {isDown && <rect width={NODE_W} height={NODE_H} rx={2} className="topology-node-dotfill" />}
+                    <text x={16} y={24} className={`topology-node-dot mono ${toneClass}`}>
+                      {statusSymbol}
+                    </text>
                     <text x={28} y={24} className="topology-node-name mono">
                       {nodeId.toUpperCase()}
                     </text>
@@ -361,30 +403,38 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, m
                       {statusLabel}
                     </text>
                     <line x1={14} y1={36} x2={NODE_W - 14} y2={36} className="topology-node-divider" />
-                    <text x={14} y={58} className="topology-node-metric mono">
-                      {fmtRate(requestRate)}
-                    </text>
-                    <text x={NODE_W - 14} y={58} textAnchor="end" className="topology-node-metric mono">
-                      P95 {fmtMs(p95)}
-                    </text>
-                    <text x={14} y={80} className={`topology-node-metric mono${hasErrorSignal ? " critical" : ""}`}>
-                      ERR {fmtErrPct(errorRate, requestRate)}
-                    </text>
-                    <text x={NODE_W - 14} y={80} textAnchor="end" className="topology-node-metric mono">
-                      CPU {fmtPercent(cpu)}
-                    </text>
-                    <text x={14} y={102} className="topology-node-metric mono">
-                      MEM {fmtMb(memory)}
-                    </text>
-                    {degraded && (
-                      <text x={NODE_W - 14} y={102} textAnchor="end" className="topology-node-metric mono critical">
-                        {stats.failedIn} FAILED
+                    {noData ? (
+                      <text x={14} y={64} className="topology-node-metric mono nodata">
+                        No telemetry reported for this service yet
                       </text>
-                    )}
-                    {degraded && (
-                      <text x={14} y={124} className="topology-node-metric mono critical">
-                        {stats.failedIn} FAILED (inbound)
-                      </text>
+                    ) : (
+                      <>
+                        <text x={14} y={58} className="topology-node-metric mono">
+                          {fmtRate(requestRate)}
+                        </text>
+                        <text x={NODE_W - 14} y={58} textAnchor="end" className="topology-node-metric mono">
+                          P95 {fmtMs(p95)}
+                        </text>
+                        <text x={14} y={80} className={`topology-node-metric mono${hasErrorSignal ? " critical" : ""}`}>
+                          ERR {fmtErrPct(errorRate, requestRate)}
+                        </text>
+                        <text x={NODE_W - 14} y={80} textAnchor="end" className="topology-node-metric mono">
+                          CPU {fmtPercent(cpu)}
+                        </text>
+                        <text x={14} y={102} className="topology-node-metric mono">
+                          MEM {fmtMb(memory)}
+                        </text>
+                        {degraded && (
+                          <text x={NODE_W - 14} y={102} textAnchor="end" className="topology-node-metric mono critical">
+                            {stats.failedIn} FAILED
+                          </text>
+                        )}
+                        {degraded && (
+                          <text x={14} y={124} className="topology-node-metric mono critical">
+                            {stats.failedIn} FAILED (inbound)
+                          </text>
+                        )}
+                      </>
                     )}
                   </g>
                 );

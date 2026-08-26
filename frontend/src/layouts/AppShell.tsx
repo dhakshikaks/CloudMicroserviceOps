@@ -4,6 +4,7 @@ import { Bell, Download, Search } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import CommandPalette from "../components/CommandPalette";
 import NotificationDrawer from "../components/NotificationDrawer";
+import StatusBar from "../components/StatusBar";
 import { NotificationsProvider, useNotifications } from "../context/NotificationsContext";
 import { useTimeWindow } from "../context/TimeWindowContext";
 import { TIME_WINDOWS } from "../services/api";
@@ -31,6 +32,11 @@ function AppShellInner() {
       <Sidebar />
       <div className="app-body">
         <header className="topbar">
+          <div className="window-traffic-lights" aria-hidden>
+            <span className="traffic-light red" />
+            <span className="traffic-light yellow" />
+            <span className="traffic-light green" />
+          </div>
           <div className="topbar-live" title="Dashboard is polling live data">
             <span className="live-dot" />
             LIVE
@@ -66,6 +72,7 @@ function AppShellInner() {
         <main className="app-main">
           <Outlet />
         </main>
+        <StatusBar />
       </div>
       <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <NotificationDrawer isOpen={notifOpen} onClose={() => setNotifOpen(false)} />

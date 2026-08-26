@@ -46,6 +46,10 @@ services:
   prometheus:
     image: prom/prometheus:v2.54.1
     restart: *restart-policy
+    ports:
+      # Published so `npm run dev` (Vite, outside Docker) can reach it at the
+      # same localhost:9090 its dev proxy already assumes - see frontend/vite.config.ts.
+      - "127.0.0.1:9090:9090"
     volumes:
       - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     depends_on:
@@ -69,6 +73,10 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     restart: *restart-policy
+    ports:
+      # Published so `npm run dev` (Vite, outside Docker) can reach it at the
+      # same localhost:8080 its dev proxy already assumes - see frontend/vite.config.ts.
+      - "127.0.0.1:8080:8080"
     environment:
       <<: *service-env
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}

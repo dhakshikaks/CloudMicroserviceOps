@@ -3,6 +3,7 @@ package com.cloudmicroops.metrics;
 import com.cloudmicroops.metrics.dto.RangeSampleDTO;
 import com.cloudmicroops.metrics.dto.RangeSeriesDTO;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -23,7 +24,19 @@ public class PrometheusClient {
     private final RestClient restClient;
 
     public PrometheusClient(@Value("${prometheus.url:http://prometheus:9090}") String prometheusUrl) {
-        this.restClient = RestClient.create(prometheusUrl);
+        // Without explicit timeouts, an outage doesn't fail - it hangs. The
+        // request thread blocks indefinitely on connect/read, which starves
+        // Tomcat's worker pool and makes *unrelated* endpoints start failing
+        // too. A few seconds is generous for an in-network Prometheus and
+        // turns a real outage into the fast, honest 503 from ApiExceptionHandler
+        // instead of an nginx/browser-level timeout with no useful body.
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(3_000);
+        requestFactory.setReadTimeout(5_000);
+        this.restClient = RestClient.builder()
+                .baseUrl(prometheusUrl)
+                .requestFactory(requestFactory)
+                .build();
     }
 
     /** @return job label -> instant value, for every series Prometheus returned. */
@@ -46,7 +59,17 @@ public class PrometheusClient {
         for (VectorResult result : response.data().result()) {
             String job = result.metric().get("job");
             if (job != null && result.value() != null && result.value().size() == 2) {
-                byJob.put(job, Double.parseDouble(result.value().get(1)));
+                double value = Double.parseDouble(result.value().get(1));
+                // histogram_quantile() legitimately returns NaN for a job with
+                // no requests to compute a quantile from (0/0) - real
+                // Prometheus behavior, not a bug. Treat it the same as a job
+                // Prometheus hasn't scraped: absent from the map, not a
+                // fabricated 0 and not a value that would corrupt downstream
+                // math (NaN is not valid JSON and silently poisons JS number
+                // coercion in whatever consumes it).
+                if (Double.isFinite(value)) {
+                    byJob.put(job, value);
+                }
             }
         }
         return byJob;
@@ -70,6 +93,12 @@ public class PrometheusClient {
                         result.metric(),
                         result.values().stream()
                                 .map(pair -> new RangeSampleDTO((long) Double.parseDouble(pair.get(0)), Double.parseDouble(pair.get(1))))
+                                // Same NaN case as queryInstant, but per-point: a step with
+                                // no traffic to compute histogram_quantile() from. Dropping
+                                // just that point (an honest gap, exactly like a real scrape
+                                // gap) keeps the surrounding real samples intact instead of
+                                // corrupting the whole series' min/max scale downstream.
+                                .filter(sample -> Double.isFinite(sample.value()))
                                 .toList()
                 ))
                 .toList();
