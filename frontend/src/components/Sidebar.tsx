@@ -2,12 +2,15 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   Activity,
   AlertTriangle,
+  Bell,
+  Download,
   FileText,
   HeartPulse,
   LayoutDashboard,
   LineChart,
   LogOut,
   Network,
+  Search,
   Server,
   type LucideIcon,
 } from "lucide-react";
@@ -25,6 +28,8 @@ interface NavItem {
   label: string;
   icon: LucideIcon;
   end?: boolean;
+  /** Static, honest one-liner about what this page shows - not a live number. */
+  meta: string;
 }
 
 interface NavSection {
@@ -33,22 +38,35 @@ interface NavSection {
 }
 
 const NAV_SECTIONS: NavSection[] = [
-  { heading: null, items: [{ to: "/", label: "Overview", icon: LayoutDashboard, end: true }] },
+  { heading: null, items: [{ to: "/", label: "Overview", icon: LayoutDashboard, end: true, meta: "Live system snapshot" }] },
   {
     heading: "Monitor",
     items: [
-      { to: "/services", label: "Services", icon: Server },
-      { to: "/topology", label: "Topology", icon: Network },
-      { to: "/metrics", label: "Metrics", icon: LineChart },
-      { to: "/events", label: "Events", icon: Activity },
+      { to: "/services", label: "Services", icon: Server, meta: `${MONITORED_SERVICES.length} monitored services` },
+      { to: "/topology", label: "Topology", icon: Network, meta: "Live dependency graph" },
+      { to: "/metrics", label: "Metrics", icon: LineChart, meta: "CPU · memory · latency" },
+      { to: "/events", label: "Events", icon: Activity, meta: "Live request/response log" },
     ],
   },
-  { heading: "Investigate", items: [{ to: "/incidents", label: "Incident Center", icon: AlertTriangle }] },
-  { heading: "Reports", items: [{ to: "/reports", label: "Report Center", icon: FileText }] },
-  { heading: "System", items: [{ to: "/system/health", label: "System Health", icon: HeartPulse }] },
+  {
+    heading: "Investigate",
+    items: [{ to: "/incidents", label: "Incident Center", icon: AlertTriangle, meta: "Automated root-cause detection" }],
+  },
+  { heading: "Reports", items: [{ to: "/reports", label: "Report Center", icon: FileText, meta: "CSV & PDF exports" }] },
+  {
+    heading: "System",
+    items: [{ to: "/system/health", label: "System Health", icon: HeartPulse, meta: "Prometheus & uptime checks" }],
+  },
 ];
 
-export default function Sidebar() {
+interface Props {
+  onSearch: () => void;
+  onNotifications: () => void;
+  onExport: () => void;
+  unreadCount: number;
+}
+
+export default function Sidebar({ onSearch, onNotifications, onExport, unreadCount }: Props) {
   // Self-contained: the sidebar's pulse dot needs live health, independent of
   // whatever the current page is already fetching for its own display.
   const health = useFetchState<ServiceHealthMap>();
@@ -92,7 +110,10 @@ export default function Sidebar() {
                 className={({ isActive }) => `sidebar-link${isActive ? " active" : ""}`}
               >
                 <item.icon size={15} className="sidebar-link-icon" />
-                {item.label}
+                <span className="sidebar-link-text">
+                  <span className="sidebar-link-label">{item.label}</span>
+                  <span className="sidebar-link-meta">{item.meta}</span>
+                </span>
               </NavLink>
             ))}
           </div>
@@ -100,6 +121,18 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
+        <div className="sidebar-utility-row">
+          <button type="button" className="sidebar-utility-btn" title="Search (⌘K)" onClick={onSearch}>
+            <Search size={14} />
+          </button>
+          <button type="button" className="sidebar-utility-btn" title="Export current view" onClick={onExport}>
+            <Download size={14} />
+          </button>
+          <button type="button" className="sidebar-utility-btn" title="Notifications" onClick={onNotifications}>
+            <Bell size={14} />
+            {unreadCount > 0 && <span className="badge-count mono">{unreadCount > 99 ? "99+" : unreadCount}</span>}
+          </button>
+        </div>
         <div className="system-pulse">
           <span className={`system-pulse-dot ${pulseDotClass}`} />
           <span>{pulseLabel}</span>

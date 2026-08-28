@@ -15,7 +15,7 @@ import { getToken, logout } from "./auth";
 // talks to Prometheus directly - metrics/health are aggregated by the Java
 // backend (see com.cloudmicroops.metrics) and served under /api like
 // everything else.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
 export const MONITORED_SERVICES = [
   "backend",

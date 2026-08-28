@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   getDependencyGraph,
   getErrorRateRange,
@@ -13,10 +13,11 @@ import {
 import { useFetchState } from "../hooks/useFetchState";
 import { usePolling } from "../hooks/usePolling";
 import { useTimeWindow } from "../context/TimeWindowContext";
+import { useRefresh } from "../context/RefreshContext";
 import SystemStatus from "../components/SystemStatus";
-import RootCauseSummaryCard from "../components/RootCauseSummaryCard";
-import RecentEventsPanel from "../components/RecentEventsPanel";
-import DependencyGraphPanel from "../components/DependencyGraphPanel";
+import ServicePipelinePanel from "../components/ServicePipelinePanel";
+import ExecutionConsolePanel from "../components/ExecutionConsolePanel";
+import PipelineBreakdownTabs from "../components/PipelineBreakdownTabs";
 import LineChart from "../components/charts/LineChart";
 import type { DependencyGraphResponse, RootCauseCandidate, ServiceEventRecord, ServiceHealthMap } from "../types";
 import type { RuntimeMetrics } from "../components/MetricsPanel";
@@ -26,6 +27,8 @@ const TREND_POLL_INTERVAL_MS = 15000;
 
 export default function Overview() {
   const { timeWindow } = useTimeWindow();
+  const { lastRefreshAt } = useRefresh();
+  const isFirstRefresh = useRef(true);
 
   const health = useFetchState<ServiceHealthMap>();
   const graph = useFetchState<DependencyGraphResponse>();
@@ -46,6 +49,22 @@ export default function Overview() {
     metrics.run(getMetricsSnapshot());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, POLL_INTERVAL_MS);
+
+  // The topbar's "Refresh now" button forces an immediate re-poll on top of
+  // the interval above (skip the very first tick - usePolling already fires
+  // on mount at the same instant RefreshProvider's initial timestamp is set).
+  useEffect(() => {
+    if (isFirstRefresh.current) {
+      isFirstRefresh.current = false;
+      return;
+    }
+    health.run(getServiceHealth());
+    graph.run(getDependencyGraph());
+    rootCauses.run(getRootCauses());
+    events.run(getRecentEvents());
+    metrics.run(getMetricsSnapshot());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastRefreshAt]);
 
   useEffect(() => {
     let cancelled = false;
@@ -86,104 +105,57 @@ export default function Overview() {
         latencyP95={metrics.data?.latencyP95 ?? null}
       />
 
-      <div className="overview-section">
-        <h2 className="section-title">Service Operations — 5 Monitored Services</h2>
-        <div className="services-grid-cards" style={{ marginTop: "0.5rem" }}>
-          {["user-service", "order-service", "payment-service", "inventory-service", "backend"].map((svc) => {
-            const isUp = health.data?.[svc] !== false;
-            const cpu = metrics.data?.cpu?.[svc];
-            const mem = metrics.data?.memory?.[svc];
-            const req = metrics.data?.requestRate?.[svc];
-            const lat = metrics.data?.latencyP95?.[svc];
-            const err = metrics.data?.errorRate?.[svc];
+      <div className="pipeline-layout">
+        <div className="pipeline-main">
+          <ServicePipelinePanel graph={graph.data} health={health.data} metrics={metrics.data} loading={graph.loading} error={graph.error} />
 
-            return (
-              <div className={`service-card${!isUp || (err && err > 0) ? " is-degraded" : ""}`} key={svc}>
-                <div className="service-card-header">
-                  <span className="service-card-title">{svc}</span>
-                  <span className={`status-badge status-${isUp ? "up" : "down"}`}>
-                    <span className="status-dot" />
-                    {isUp ? "UP" : "DOWN"}
-                  </span>
-                </div>
-                <div className="service-card-metrics">
-                  <div>
-                    <div className="service-card-metric-label">CPU</div>
-                    <div className="service-card-metric-value">{cpu !== undefined ? `${(cpu * 100).toFixed(1)}%` : "—"}</div>
-                  </div>
-                  <div>
-                    <div className="service-card-metric-label">Memory</div>
-                    <div className="service-card-metric-value">{mem !== undefined ? `${(mem / 1024 / 1024).toFixed(1)} MB` : "—"}</div>
-                  </div>
-                  <div>
-                    <div className="service-card-metric-label">Throughput</div>
-                    <div className="service-card-metric-value">{req !== undefined ? `${req.toFixed(1)}/s` : "—"}</div>
-                  </div>
-                  <div>
-                    <div className="service-card-metric-label">Latency P95</div>
-                    <div className="service-card-metric-value">{lat !== undefined ? `${(lat * 1000).toFixed(0)}ms` : "—"}</div>
-                  </div>
-                  <div>
-                    <div className="service-card-metric-label">Error Rate</div>
-                    <div className={`service-card-metric-value${err && err > 0 ? " critical" : ""}`}>
-                      {err !== undefined ? `${err.toFixed(2)}/s` : "—"}
-                    </div>
-                  </div>
-                </div>
+          <div className="dominant-chart">
+            <div className="dominant-chart-head">
+              <h2>Request rate — all services</h2>
+              <div style={{ display: "flex", alignItems: "baseline", gap: "0.75rem" }}>
+                {updatedLabel && <span className="last-updated">{updatedLabel}</span>}
+                <span className="dominant-chart-value">{requestRateNow === undefined ? "—" : `${requestRateNow.toFixed(2)}/s`}</span>
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="overview-section overview-topology-section">
-        <h2 className="section-title">Topology — Live Call Graph</h2>
-        <DependencyGraphPanel graph={graph.data} loading={graph.loading} error={graph.error} metrics={metrics.data} />
-      </div>
-
-      <div className="overview-section">
-        <h2 className="section-title">Root cause</h2>
-        <div className="command-grid-incident">
-          <RootCauseSummaryCard
-            candidates={rootCauses.data}
-            metrics={metrics.data}
-            graph={graph.data}
-            loading={rootCauses.loading}
-            error={rootCauses.error}
-            compact
-          />
-        </div>
-      </div>
-
-      <div className="dominant-chart">
-        <div className="dominant-chart-head">
-          <h2>Request rate — all services</h2>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "0.75rem" }}>
-            {updatedLabel && <span className="last-updated">{updatedLabel}</span>}
-            <span className="dominant-chart-value">{requestRateNow === undefined ? "—" : `${requestRateNow.toFixed(2)}/s`}</span>
+            </div>
+            <LineChart samples={requestRateSamples} width={1040} height={220} yFormat={(v) => `${v.toFixed(1)}/s`} />
           </div>
-        </div>
-        <LineChart samples={requestRateSamples} width={1040} height={220} yFormat={(v) => `${v.toFixed(1)}/s`} />
-      </div>
 
-      <div className="trend-grid">
-        <div className="trend-card">
-          <h3>P95 latency</h3>
-          <LineChart samples={latencyTrend.data?.[0]?.samples ?? []} width={500} height={130} yFormat={(v) => `${(v * 1000).toFixed(0)}ms`} />
-        </div>
-        <div className="trend-card">
-          <h3>Error rate</h3>
-          <LineChart
-            samples={errorRateTrend.data?.[0]?.samples ?? []}
-            width={500}
-            height={130}
-            yFormat={(v) => `${v.toFixed(2)}/s`}
-            tone={(errorRateTrend.data?.[0]?.samples ?? []).some((s) => s.value > 0) ? "critical" : "default"}
-          />
-        </div>
-      </div>
+          <div className="trend-grid">
+            <div className="trend-card">
+              <h3>P95 latency</h3>
+              <LineChart samples={latencyTrend.data?.[0]?.samples ?? []} width={500} height={130} yFormat={(v) => `${(v * 1000).toFixed(0)}ms`} />
+            </div>
+            <div className="trend-card">
+              <h3>Error rate</h3>
+              <LineChart
+                samples={errorRateTrend.data?.[0]?.samples ?? []}
+                width={500}
+                height={130}
+                yFormat={(v) => `${v.toFixed(2)}/s`}
+                tone={(errorRateTrend.data?.[0]?.samples ?? []).some((s) => s.value > 0) ? "critical" : "default"}
+              />
+            </div>
+          </div>
 
-      <RecentEventsPanel events={events.data ? events.data.slice(0, 6) : null} loading={events.loading} error={events.error} compact />
+          <PipelineBreakdownTabs metrics={metrics.data} loading={metrics.loading} error={metrics.error} />
+        </div>
+
+        <ExecutionConsolePanel
+          rootCauseProps={{
+            candidates: rootCauses.data,
+            metrics: metrics.data,
+            graph: graph.data,
+            loading: rootCauses.loading,
+            error: rootCauses.error,
+          }}
+          events={events.data}
+          eventsLoading={events.loading}
+          eventsError={events.error}
+          metrics={metrics.data}
+          metricsLoading={metrics.loading}
+          metricsError={metrics.error}
+        />
+      </div>
     </div>
   );
 }

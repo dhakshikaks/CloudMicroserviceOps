@@ -5,6 +5,8 @@ import type { DependencyEdge, DependencyGraphResponse, ServiceHealthMap } from "
 import type { RuntimeMetrics } from "./MetricsPanel";
 import SectionState from "./SectionState";
 import Tooltip from "./charts/Tooltip";
+import { computeLayers } from "../lib/graphLayers";
+import { fmtPercent, fmtMb, fmtRate, fmtMs, fmtErrPct } from "../lib/format";
 
 interface Props {
   graph: DependencyGraphResponse | null;
@@ -19,33 +21,6 @@ interface Props {
   minCanvasHeight?: number;
   /** Ceiling for the canvas height (default 680) - a dedicated topology page can afford taller. */
   maxCanvasHeight?: number;
-}
-
-/** Longest-path-from-a-root layering, computed purely from the real edges. */
-function computeLayers(graph: DependencyGraphResponse): string[][] {
-  const ids = graph.nodes.map((n) => n.id);
-  const incoming = new Map<string, string[]>(ids.map((id) => [id, []]));
-  for (const edge of graph.edges) {
-    incoming.get(edge.targetService)?.push(edge.sourceService);
-  }
-
-  const depth = new Map<string, number>();
-  function depthOf(id: string, visiting: Set<string>): number {
-    if (depth.has(id)) return depth.get(id)!;
-    if (visiting.has(id)) return 0; // defensive cycle guard
-    visiting.add(id);
-    const preds = incoming.get(id) ?? [];
-    const d = preds.length === 0 ? 0 : Math.max(...preds.map((p) => depthOf(p, visiting))) + 1;
-    depth.set(id, d);
-    visiting.delete(id);
-    return d;
-  }
-  ids.forEach((id) => depthOf(id, new Set()));
-
-  const maxDepth = ids.length === 0 ? -1 : Math.max(...ids.map((id) => depth.get(id) ?? 0));
-  const layers: string[][] = Array.from({ length: maxDepth + 1 }, () => []);
-  ids.forEach((id) => layers[depth.get(id) ?? 0].push(id));
-  return layers;
 }
 
 // Left-to-right layout (layers = columns): fills a wide canvas far better
@@ -90,25 +65,6 @@ function computeNodeStats(nodeId: string, edges: DependencyEdge[]): NodeStats {
     totalOut: outgoing.reduce((sum, e) => sum + e.totalCalls, 0),
     failedIn: incoming.reduce((sum, e) => sum + e.failedCalls, 0),
   };
-}
-
-function fmtPercent(v: number | undefined): string {
-  return v === undefined ? "—" : `${(v * 100).toFixed(1)}%`;
-}
-function fmtMb(v: number | undefined): string {
-  return v === undefined ? "—" : `${(v / 1024 / 1024).toFixed(1)} MB`;
-}
-function fmtRate(v: number | undefined): string {
-  return v === undefined ? "—" : `${v.toFixed(2)} req/s`;
-}
-function fmtMs(v: number | undefined): string {
-  return v === undefined ? "—" : `${(v * 1000).toFixed(0)} ms`;
-}
-/** Error % derived from two real Prometheus values (errorRate / requestRate) - not fabricated. */
-function fmtErrPct(errorRate: number | undefined, requestRate: number | undefined): string {
-  if (errorRate === undefined || requestRate === undefined) return "—";
-  if (requestRate <= 0) return "0.0%";
-  return `${((errorRate / requestRate) * 100).toFixed(1)}%`;
 }
 
 const MIN_ZOOM = 0.5;
