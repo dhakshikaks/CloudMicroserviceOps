@@ -136,8 +136,6 @@ export default function Overview() {
               />
             </div>
           </div>
-
-          <PipelineBreakdownTabs metrics={metrics.data} loading={metrics.loading} error={metrics.error} />
         </div>
 
         <ExecutionConsolePanel
@@ -156,6 +154,8 @@ export default function Overview() {
           metricsError={metrics.error}
         />
       </div>
+
+      <PipelineBreakdownTabs metrics={metrics.data} loading={metrics.loading} error={metrics.error} />
     </div>
   );
 }
