@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Activity,
@@ -8,11 +8,14 @@ import {
   HeartPulse,
   LayoutDashboard,
   LineChart,
+  Moon,
   Network,
   Server,
+  Sun,
   type LucideIcon,
 } from "lucide-react";
 import { getRootCauses, MONITORED_SERVICES } from "../services/api";
+import { useTheme } from "../context/ThemeContext";
 
 interface Props {
   isOpen: boolean;
@@ -22,9 +25,11 @@ interface Props {
 interface PaletteItem {
   id: string;
   label: string;
-  group: "Navigation" | "Service" | "Incident" | "Reports";
+  group: "Navigation" | "Service" | "Incident" | "Reports" | "Preferences";
   icon: LucideIcon;
-  to: string;
+  /** Either a route to navigate to, or an in-place action. */
+  to?: string;
+  run?: () => void;
 }
 
 const NAV_ITEMS: PaletteItem[] = [
@@ -48,6 +53,7 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [activeIncidentService, setActiveIncidentService] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
 
   // Cheap one-shot check on open (not a continuous poll) - only real data,
   // no fabricated "search results".
@@ -79,8 +85,24 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
           },
         ]
       : [];
-    return [...incidentItem, ...NAV_ITEMS, ...REPORT_ITEMS, ...serviceItems];
-  }, [activeIncidentService]);
+    const themeItem: PaletteItem = {
+      id: "pref-theme",
+      label: theme === "dark" ? "Switch to light theme" : "Switch to dark theme",
+      group: "Preferences",
+      icon: theme === "dark" ? Sun : Moon,
+      run: toggleTheme,
+    };
+    return [...incidentItem, ...NAV_ITEMS, ...REPORT_ITEMS, ...serviceItems, themeItem];
+  }, [activeIncidentService, theme, toggleTheme]);
+
+  const activate = useCallback(
+    (item: PaletteItem) => {
+      if (item.run) item.run();
+      else if (item.to) navigate(item.to);
+      onClose();
+    },
+    [navigate, onClose]
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -106,15 +128,12 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
       } else if (e.key === "Enter") {
         e.preventDefault();
         const item = filtered[activeIndex];
-        if (item) {
-          navigate(item.to);
-          onClose();
-        }
+        if (item) activate(item);
       }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, filtered, activeIndex, navigate, onClose]);
+  }, [isOpen, filtered, activeIndex, activate, onClose]);
 
   if (!isOpen) return null;
 
@@ -132,7 +151,7 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
         />
         <div className="command-palette-list">
           {filtered.length === 0 && <div className="command-palette-empty">No matches.</div>}
-          {(["Incident", "Navigation", "Reports", "Service"] as const).map((group) => {
+          {(["Incident", "Navigation", "Reports", "Service", "Preferences"] as const).map((group) => {
             const groupItems = filtered.filter((item) => item.group === group);
             if (groupItems.length === 0) return null;
             return (
@@ -147,10 +166,7 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
                       type="button"
                       className={`command-palette-item${isActive ? " active" : ""}`}
                       onMouseEnter={() => setActiveIndex(renderIndex)}
-                      onClick={() => {
-                        navigate(item.to);
-                        onClose();
-                      }}
+                      onClick={() => activate(item)}
                     >
                       <item.icon size={14} />
                       {item.label}

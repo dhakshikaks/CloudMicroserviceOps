@@ -117,19 +117,18 @@ export default function Overview() {
                 <span className="dominant-chart-value">{requestRateNow === undefined ? "—" : `${requestRateNow.toFixed(2)}/s`}</span>
               </div>
             </div>
-            <LineChart samples={requestRateSamples} width={1040} height={220} yFormat={(v) => `${v.toFixed(1)}/s`} />
+            <LineChart samples={requestRateSamples} height={220} yFormat={(v) => `${v.toFixed(1)}/s`} />
           </div>
 
           <div className="trend-grid">
             <div className="trend-card">
               <h3>P95 latency</h3>
-              <LineChart samples={latencyTrend.data?.[0]?.samples ?? []} width={500} height={130} yFormat={(v) => `${(v * 1000).toFixed(0)}ms`} />
+              <LineChart samples={latencyTrend.data?.[0]?.samples ?? []} height={130} yFormat={(v) => `${(v * 1000).toFixed(0)}ms`} />
             </div>
             <div className="trend-card">
               <h3>Error rate</h3>
               <LineChart
                 samples={errorRateTrend.data?.[0]?.samples ?? []}
-                width={500}
                 height={130}
                 yFormat={(v) => `${v.toFixed(2)}/s`}
                 tone={(errorRateTrend.data?.[0]?.samples ?? []).some((s) => s.value > 0) ? "critical" : "default"}

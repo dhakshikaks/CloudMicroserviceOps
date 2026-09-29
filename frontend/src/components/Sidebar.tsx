@@ -9,9 +9,12 @@ import {
   LayoutDashboard,
   LineChart,
   LogOut,
+  Moon,
   Network,
   Search,
   Server,
+  Sun,
+  Waypoints,
   type LucideIcon,
 } from "lucide-react";
 import type { ServiceHealthMap } from "../types";
@@ -20,6 +23,7 @@ import { getServiceHealth, MONITORED_SERVICES } from "../services/api";
 import { useFetchState } from "../hooks/useFetchState";
 import { usePolling } from "../hooks/usePolling";
 import { deriveSystemPulse } from "../lib/status";
+import { useTheme } from "../context/ThemeContext";
 
 const POLL_INTERVAL_MS = 7000;
 
@@ -73,6 +77,7 @@ export default function Sidebar({ onSearch, onNotifications, onExport, unreadCou
   usePolling(() => health.run(getServiceHealth()), POLL_INTERVAL_MS);
   const systemPulse = deriveSystemPulse(health.data, MONITORED_SERVICES);
 
+  const { theme, toggleTheme } = useTheme();
   const user = getCurrentUser();
   const navigate = useNavigate();
 
@@ -91,7 +96,9 @@ export default function Sidebar({ onSearch, onNotifications, onExport, unreadCou
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <span className="sidebar-mark" />
+        <span className="sidebar-mark">
+          <Waypoints size={15} strokeWidth={2.25} />
+        </span>
         <span className="sidebar-brand-text">
           <span className="sidebar-brand-name">CloudMicroserviceOps</span>
           <span className="sidebar-brand-tag">Observability Platform</span>
@@ -131,6 +138,15 @@ export default function Sidebar({ onSearch, onNotifications, onExport, unreadCou
           <button type="button" className="sidebar-utility-btn" title="Notifications" onClick={onNotifications}>
             <Bell size={14} />
             {unreadCount > 0 && <span className="badge-count mono">{unreadCount > 99 ? "99+" : unreadCount}</span>}
+          </button>
+          <button
+            type="button"
+            className="sidebar-utility-btn"
+            title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            onClick={toggleTheme}
+          >
+            {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
           </button>
         </div>
         <div className="system-pulse">

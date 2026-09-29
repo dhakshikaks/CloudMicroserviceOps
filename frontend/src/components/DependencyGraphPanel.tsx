@@ -28,9 +28,9 @@ interface Props {
 // (Datadog, Docker Desktop) are conventionally read - left is upstream.
 // Nodes are deliberately large, information-dense cards - the topology is
 // this product's hero visual, not a decorative diagram.
-const NODE_W = 260;
+const NODE_W = 232;
 const NODE_H = 140;
-const LAYER_GAP_X = 150;
+const LAYER_GAP_X = 96;
 const NODE_GAP_Y = 56;
 
 function computePositions(layers: string[][]): Map<string, { x: number; y: number }> {
@@ -220,7 +220,7 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, h
                 </marker>
                 <pattern id="topology-hatch-pattern" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
                   <rect width="8" height="8" fill="transparent" />
-                  <line x1="0" y1="0" x2="0" y2="8" stroke="rgba(10,10,10,0.09)" strokeWidth="3" />
+                  <line x1="0" y1="0" x2="0" y2="8" stroke="var(--graph-hatch)" strokeWidth="3" />
                 </pattern>
                 <pattern id="topology-dot-pattern" patternUnits="userSpaceOnUse" width="7" height="7">
                   <rect width="7" height="7" fill="transparent" />
@@ -344,11 +344,11 @@ export default function DependencyGraphPanel({ graph, loading, error, metrics, h
                     <rect
                       width={NODE_W}
                       height={NODE_H}
-                      rx={2}
+                      rx={8}
                       className={`topology-node-rect${isDown ? " down" : isDegraded ? " degraded" : ""}${noData ? " nodata" : ""}${selected ? " selected" : ""}`}
                     />
-                    {isDegraded && <rect width={NODE_W} height={NODE_H} rx={2} className="topology-node-hatch" />}
-                    {isDown && <rect width={NODE_W} height={NODE_H} rx={2} className="topology-node-dotfill" />}
+                    {isDegraded && <rect width={NODE_W} height={NODE_H} rx={8} className="topology-node-hatch" />}
+                    {isDown && <rect width={NODE_W} height={NODE_H} rx={8} className="topology-node-dotfill" />}
                     <text x={16} y={24} className={`topology-node-dot mono ${toneClass}`}>
                       {statusSymbol}
                     </text>

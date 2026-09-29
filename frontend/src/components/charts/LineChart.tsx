@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useId, useRef, useState, type MouseEvent } from "react";
 import type { RangeSample } from "../../services/api";
 import Tooltip from "./Tooltip";
 
@@ -24,10 +24,16 @@ export default function LineChart({
   tone = "default",
 }: Props) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  // Per-instance gradient id: several charts share a page, and url(#id)
+  // resolves to the first match in the document.
+  const gradientId = `linechart-fill-${useId().replace(/:/g, "")}`;
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [containerWidth, setContainerWidth] = useState<number>(propWidth ?? 800);
 
+  // The wrap (and so containerRef) only exists once there are >= 2 samples,
+  // so the observer must re-attach when data first arrives.
+  const hasData = samples.length >= 2;
   useEffect(() => {
     if (propWidth) {
       setContainerWidth(propWidth);
@@ -42,7 +48,7 @@ export default function LineChart({
     });
     observer.observe(el);
     return () => observer.disconnect();
-  }, [propWidth]);
+  }, [propWidth, hasData]);
 
   if (samples.length < 2) {
     return (
@@ -141,7 +147,13 @@ export default function LineChart({
           {timeLabel(samples[samples.length - 1].timestampSec)}
         </text>
 
-        <path d={areaD} className="linechart-area" />
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" className="linechart-grad-stop is-top" />
+            <stop offset="100%" className="linechart-grad-stop is-bottom" />
+          </linearGradient>
+        </defs>
+        <path d={areaD} className="linechart-area" fill={`url(#${gradientId})`} />
         <path d={pathD} className="linechart-line" />
 
         {/* Live indicator - a soft pulsing ring on the most recent real datapoint,

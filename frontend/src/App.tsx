@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, type Location } from "react-router-dom";
 import AppShell from "./layouts/AppShell";
 import { TimeWindowProvider } from "./context/TimeWindowContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import Overview from "./pages/Overview";
 import Services from "./pages/Services";
 import ServiceInspectorOverlay from "./pages/ServiceInspectorOverlay";
@@ -71,10 +72,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <TimeWindowProvider>
-        <AppRoutes />
-      </TimeWindowProvider>
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <TimeWindowProvider>
+          <AppRoutes />
+        </TimeWindowProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }

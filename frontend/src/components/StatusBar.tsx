@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getMetricsSnapshot, getRequestRateRange, getServiceHealth, MONITORED_SERVICES, type RangeSample } from "../services/api";
+import { API_BASE_URL, getMetricsSnapshot, getRequestRateRange, getServiceHealth, MONITORED_SERVICES, type RangeSample } from "../services/api";
 import { useFetchState } from "../hooks/useFetchState";
 import { usePolling } from "../hooks/usePolling";
 import type { ServiceHealthMap } from "../types";
@@ -63,7 +63,7 @@ export default function StatusBar() {
       <span className="status-bar-item mono">Req/s (15m)</span>
       <Sparkline samples={samples} width={100} height={20} tone={hasErrors ? "warning" : "default"} />
       <div className="status-bar-spacer" />
-      <span className="status-bar-item mono status-bar-muted">CloudMicroserviceOps</span>
+      <span className="status-bar-item mono status-bar-muted">API · {API_BASE_URL}</span>
     </footer>
   );
 }

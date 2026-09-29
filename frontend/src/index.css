@@ -2,9 +2,10 @@
    CloudMicroserviceOps — Design System
    Dark, native system-utility chrome (macOS Activity Monitor DNA):
    flat hairline-divided panes, a segmented tab control, dense tabular
-   data, translucent toolbar, window controls, a bottom status bar.
-   Strictly black/white/gray — state (selection, severity, status) is
-   communicated only through weight, borders, invert, and pattern, never hue.
+   data, translucent toolbar, a bottom status bar. Neutral grays carry the
+   layout; a small accent palette (teal brand, green/amber/red status) is
+   reserved for state and emphasis. Every color is a token with a light and
+   a dark value - see the Light theme block below.
    ===================================================================== */
 
 :root {
@@ -64,6 +65,51 @@
   --accent-red: #ff5c5c;
   --accent-red-soft: rgba(255, 92, 92, 0.14);
 
+  /* Text/marks drawn on top of a filled accent */
+  --on-teal: #0a2e2e;
+  --on-green: #0a2e14;
+  --on-selected: #ffffff;
+  --on-selected-soft: rgba(255, 255, 255, 0.75);
+  --on-selected-muted: rgba(255, 255, 255, 0.6);
+  --on-selected-border: rgba(255, 255, 255, 0.18);
+  --on-selected-border-strong: rgba(255, 255, 255, 0.4);
+  --invert-divider: rgba(19, 19, 21, 0.14);
+
+  /* Canvases, popovers, overlays */
+  --bg-canvas: #161618;
+  --canvas-dot: rgba(255, 255, 255, 0.07);
+  --canvas-dot-faint: rgba(255, 255, 255, 0.05);
+  --bg-popover: #2c2c2e;
+  --scrim: rgba(0, 0, 0, 0.55);
+  --scrim-soft: rgba(0, 0, 0, 0.45);
+  --focus-ring: rgba(255, 255, 255, 0.08);
+  --row-stripe: rgba(255, 255, 255, 0.015);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.16);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.26);
+
+  /* Charts & graph */
+  --chart-grid: rgba(255, 255, 255, 0.06);
+  --chart-tick: rgba(255, 255, 255, 0.3);
+  --graph-edge: rgba(255, 255, 255, 0.22);
+  --graph-edge-strong: rgba(255, 255, 255, 0.52);
+  --graph-hatch: rgba(10, 10, 10, 0.09);
+
+  --tooltip-bg: #38383a;
+  --tooltip-fg: #ffffff;
+  --tooltip-muted: #a3a3a6;
+  --tooltip-faint: #8e8e92;
+  --tooltip-border: rgba(255, 255, 255, 0.1);
+
+  /* Refinement layer */
+  --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-card-hover: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --ring: 0 0 0 2px var(--bg-page), 0 0 0 4px var(--accent-teal-border);
+  --chart-line: var(--accent-teal);
+  --chart-line-critical: var(--accent-red);
+  --chart-fill-opacity: 0.22;
+  --critical-fg: var(--accent-red);
+  --brand-gradient: linear-gradient(135deg, #3ecfcf 0%, #4a9eff 100%);
+
   --radius: 8px;
   --radius-sm: 5px;
   --radius-lg: 10px;
@@ -84,6 +130,103 @@
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, monospace;
 
   font-family: var(--font-sans);
+}
+
+/* ---------------- Light theme ----------------
+   Same monochrome-first system, inverted: light panes, dark hairlines,
+   and "selected"/invert emphasis flips to a dark fill with light text.
+   Applied via <html data-theme="light"> (set by ThemeContext and by the
+   pre-paint script in index.html, which follows the OS preference until
+   the user picks a theme explicitly). */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-page: #f5f5f7;
+  --bg-surface: #ffffff;
+  --bg-surface-raised: #fafafb;
+  --bg-hover: #ececef;
+  --bg-pressed: #e1e1e5;
+  --bg-inset: #f0f0f2;
+  --bg-segment-active: #ffffff;
+  --bg-chrome: rgba(245, 245, 247, 0.8);
+
+  --border: rgba(0, 0, 0, 0.1);
+  --border-strong: rgba(0, 0, 0, 0.18);
+  --border-hairline: rgba(0, 0, 0, 0.06);
+
+  --text-primary: #1d1d1f;
+  --text-secondary: #48484c;
+  --text-muted: #6e6e73;
+  --text-faint: #8e8e93;
+  --text-inverse: #ffffff;
+
+  --invert-bg: #1d1d1f;
+  --invert-fg: #f5f5f7;
+  --invert-fg-muted: #a1a1a6;
+  --invert-border: #1d1d1f;
+  --invert-divider: rgba(245, 245, 247, 0.16);
+
+  --accent-selected: #2c2c2e;
+  --accent-selected-hover: #3a3a3c;
+  --accent-selected-soft: rgba(0, 0, 0, 0.05);
+
+  /* Accents darkened so they hold contrast on white */
+  --accent-teal: #0f9b9b;
+  --accent-teal-soft: rgba(15, 155, 155, 0.12);
+  --accent-teal-border: rgba(15, 155, 155, 0.5);
+  --accent-green: #1f9d45;
+  --accent-green-soft: rgba(31, 157, 69, 0.12);
+  --accent-blue: #1a6fd6;
+  --accent-blue-soft: rgba(26, 111, 214, 0.12);
+  --accent-amber: #b86e00;
+  --accent-amber-soft: rgba(184, 110, 0, 0.12);
+  --accent-red: #d93636;
+  --accent-red-soft: rgba(217, 54, 54, 0.1);
+
+  --on-teal: #ffffff;
+  --on-green: #ffffff;
+
+  --bg-canvas: #fbfbfc;
+  --canvas-dot: rgba(0, 0, 0, 0.09);
+  --canvas-dot-faint: rgba(0, 0, 0, 0.06);
+  --bg-popover: #ffffff;
+  --scrim: rgba(0, 0, 0, 0.28);
+  --scrim-soft: rgba(0, 0, 0, 0.2);
+  --focus-ring: rgba(0, 0, 0, 0.08);
+  --row-stripe: rgba(0, 0, 0, 0.02);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.18);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.3);
+
+  --chart-grid: rgba(0, 0, 0, 0.08);
+  --chart-tick: rgba(0, 0, 0, 0.35);
+  --graph-edge: rgba(0, 0, 0, 0.25);
+  --graph-edge-strong: rgba(0, 0, 0, 0.55);
+  --graph-hatch: rgba(0, 0, 0, 0.08);
+
+  --tooltip-bg: #1d1d1f;
+  --tooltip-fg: #ffffff;
+  --tooltip-muted: #b4b4b8;
+  --tooltip-faint: #8e8e93;
+  --tooltip-border: rgba(0, 0, 0, 0.1);
+
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.05);
+  --shadow-card-hover: 0 2px 4px rgba(16, 24, 40, 0.05), 0 10px 24px rgba(16, 24, 40, 0.08);
+  --chart-fill-opacity: 0.16;
+  --brand-gradient: linear-gradient(135deg, #0f9b9b 0%, #1a6fd6 100%);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.18);
+}
+
+/* Smooth cross-fade only while the user flips the theme, so normal
+   hover/state transitions keep their own timing. */
+:root.theme-transition,
+:root.theme-transition *,
+:root.theme-transition *::before,
+:root.theme-transition *::after {
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, fill 200ms ease,
+    stroke 200ms ease !important;
 }
 
 *,
@@ -148,12 +291,12 @@ ol {
 }
 
 select {
-  color-scheme: dark;
+  color-scheme: inherit;
 }
 
 ::selection {
-  background: #f2f2f3;
-  color: #131315;
+  background: var(--invert-bg);
+  color: var(--invert-fg);
 }
 
 ::-webkit-scrollbar {
@@ -166,13 +309,13 @@ select {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--scrollbar-thumb);
   border-radius: 999px;
   border: 3px solid var(--bg-page);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.26);
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* ---------------- App shell layout ---------------- */
@@ -211,137 +354,6 @@ select {
   gap: 1.25rem;
   height: 52px;
   padding: 0 1.5rem;
-}
-
-.topbar-subline {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  height: 20px;
-  padding: 0 1.5rem;
-  font-size: 0.63rem;
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-  border-top: 1px solid var(--border-hairline);
-}
-
-.topbar-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-  padding-right: 0.9rem;
-  border-right: 1px solid var(--border-hairline);
-}
-
-.topbar-brand-mark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-sm);
-  background: var(--accent-teal);
-  color: #0a2e2e;
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-.topbar-brand-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-
-.topbar-brand-name {
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.topbar-brand-tag {
-  font-size: 0.57rem;
-  color: var(--text-faint);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  font-family: var(--font-mono);
-}
-
-.topbar-context {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-  gap: 0.1rem;
-  flex-shrink: 0;
-}
-
-.topbar-context-label {
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-}
-
-.topbar-context-value {
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-}
-
-.topbar-fields {
-  display: flex;
-  align-items: stretch;
-  gap: 0.4rem;
-  flex-shrink: 0;
-}
-
-.topbar-field {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.4rem 0.3rem 0.6rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-inset);
-}
-
-.topbar-field-label {
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-  white-space: nowrap;
-}
-
-.topbar-field-value-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.15rem 0.5rem;
-  border-radius: var(--radius-pill);
-  background: var(--bg-surface-raised);
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.topbar-field-value-pill.tone-live {
-  background: var(--accent-blue-soft);
-  color: var(--accent-blue);
-}
-
-.topbar-field-value-pill.tone-down {
-  background: var(--accent-red-soft);
-  color: var(--accent-red);
 }
 
 .topbar-live {
@@ -495,33 +507,7 @@ select {
   border: 1.5px solid var(--bg-page);
 }
 
-/* ---------------- Window chrome (traffic lights + bottom status bar) ---------------- */
-
-.window-traffic-lights {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.traffic-light {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  display: block;
-}
-
-.traffic-light.red {
-  background: var(--accent-red);
-}
-
-.traffic-light.yellow {
-  background: var(--accent-amber);
-}
-
-.traffic-light.green {
-  background: var(--accent-green);
-}
+/* ---------------- Window chrome (bottom status bar) ---------------- */
 
 .status-bar {
   display: flex;
@@ -844,7 +830,7 @@ select {
 
 .logout-button:hover {
   background: var(--accent-selected);
-  color: #ffffff;
+  color: var(--on-selected);
   border-color: var(--accent-selected);
 }
 
@@ -1007,8 +993,8 @@ select {
 
 .pipeline-canvas {
   position: relative;
-  background-color: #161618;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-color: var(--bg-canvas);
+  background-image: radial-gradient(circle, var(--canvas-dot) 1px, transparent 1px);
   background-size: 22px 22px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -1567,7 +1553,7 @@ select {
   align-items: center;
   gap: 0.4rem;
   background: var(--accent-green);
-  color: #0a2e14;
+  color: var(--on-green);
   border: none;
   border-radius: var(--radius-sm);
   padding: 0.4rem 0.75rem;
@@ -1736,7 +1722,7 @@ select {
 }
 
 .linechart-grid {
-  stroke: rgba(255, 255, 255, 0.06);
+  stroke: var(--chart-grid);
   stroke-dasharray: 2 3;
   stroke-width: 1;
 }
@@ -1766,13 +1752,7 @@ select {
   stroke-width: 2;
 }
 
-.linechart-area {
-  fill: rgba(255, 255, 255, 0.055);
-}
-
-.linechart.tone-critical .linechart-area {
-  fill: rgba(255, 255, 255, 0.1);
-}
+/* .linechart-area is filled by a per-chart gradient (see LineChart.tsx). */
 
 .linechart-live-ring {
   fill: none;
@@ -1853,20 +1833,20 @@ select {
   z-index: 100;
   pointer-events: none;
   transform: translate(-50%, -100%) translateY(-8px);
-  background: #38383a;
-  color: #ffffff;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-fg);
   padding: 0.5rem 0.7rem;
   border-radius: var(--radius-sm);
   font-size: 0.72rem;
   line-height: 1.4;
   box-shadow: var(--shadow-md);
   white-space: nowrap;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--tooltip-border);
 }
 
 .chart-tooltip-time {
   font-size: 0.65rem;
-  color: #a3a3a6;
+  color: var(--tooltip-muted);
   font-family: var(--font-mono);
   margin-bottom: 0.2rem;
 }
@@ -1874,12 +1854,12 @@ select {
 .chart-tooltip-value {
   font-weight: 700;
   font-family: var(--font-mono);
-  color: #ffffff;
+  color: var(--tooltip-fg);
 }
 
 .chart-tooltip-muted {
   font-size: 0.65rem;
-  color: #8e8e92;
+  color: var(--tooltip-faint);
 }
 
 /* ---------------- Topology graph ---------------- */
@@ -1920,12 +1900,12 @@ select {
 
 .topology-canvas {
   position: relative;
-  background: #161618;
+  background: var(--bg-canvas);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
   user-select: none;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-image: radial-gradient(circle, var(--canvas-dot) 1px, transparent 1px);
   background-size: 22px 22px;
 }
 
@@ -1939,7 +1919,7 @@ select {
   border-radius: 0;
   height: 100vh !important;
   width: 100vw !important;
-  background-color: #161618;
+  background-color: var(--bg-canvas);
 }
 
 .topology-toolbar {
@@ -1949,7 +1929,7 @@ select {
   z-index: 10;
   display: flex;
   gap: 2px;
-  background: #2c2c2e;
+  background: var(--bg-popover);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   padding: 3px;
@@ -1987,7 +1967,7 @@ select {
 
 .topology-edge {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.22);
+  stroke: var(--graph-edge);
   transition: stroke var(--transition);
 }
 
@@ -1997,11 +1977,11 @@ select {
 }
 
 .topology-edge.high-traffic {
-  stroke: rgba(255, 255, 255, 0.52);
+  stroke: var(--graph-edge-strong);
 }
 
 .topology-arrowhead {
-  fill: rgba(255, 255, 255, 0.22);
+  fill: var(--graph-edge);
 }
 
 .topology-arrowhead.failed {
@@ -2017,7 +1997,7 @@ select {
 }
 
 .topology-edge-label-bg {
-  fill: #232325;
+  fill: var(--bg-surface);
   stroke: var(--border);
   stroke-width: 1;
   rx: 3;
@@ -2039,7 +2019,7 @@ select {
 }
 
 .topology-node-rect {
-  fill: #232325;
+  fill: var(--bg-surface);
   stroke: var(--border-strong);
   stroke-width: 1.25;
   transition: stroke var(--transition), stroke-width var(--transition);
@@ -2057,20 +2037,20 @@ select {
 .topology-node-rect.degraded {
   stroke: var(--text-primary);
   stroke-width: 2;
-  fill: #2a2a2c;
+  fill: var(--bg-surface-raised);
 }
 
 .topology-node-rect.down {
   stroke: var(--text-primary);
   stroke-width: 2;
   stroke-dasharray: 3 2;
-  fill: #2a2a2c;
+  fill: var(--bg-surface-raised);
 }
 
 .topology-node-rect.nodata {
   stroke: var(--border);
   stroke-dasharray: 2 3;
-  fill: #1c1c1e;
+  fill: var(--bg-page);
 }
 
 .topology-node-hatch {
@@ -2303,7 +2283,7 @@ select {
 }
 
 .incident-timeline-tick {
-  stroke: rgba(255, 255, 255, 0.3);
+  stroke: var(--chart-tick);
   stroke-width: 1.5;
 }
 
@@ -2601,17 +2581,17 @@ select {
 .explorer-list-item.active {
   background: var(--accent-selected);
   border-color: var(--accent-selected);
-  color: #ffffff;
+  color: var(--on-selected);
 }
 
 .explorer-list-item.active .status-badge {
   background: transparent;
-  border-color: rgba(255, 255, 255, 0.4);
-  color: #ffffff;
+  border-color: var(--on-selected-border-strong);
+  color: var(--on-selected);
 }
 
 .explorer-list-item.active .status-badge .status-dot {
-  background: #ffffff;
+  background: var(--on-selected);
 }
 
 .explorer-center {
@@ -2843,7 +2823,7 @@ select {
 
 /* Alternating row shading - the subtle banding real process-list tables use */
 .data-table tbody tr:nth-child(even) td {
-  background: rgba(255, 255, 255, 0.015);
+  background: var(--row-stripe);
 }
 
 .data-table tr.is-selectable {
@@ -2998,7 +2978,7 @@ select {
   gap: 1.1rem 1.75rem;
   margin-top: 0.4rem;
   padding-top: 0.65rem;
-  border-top: 1px solid rgba(19, 19, 21, 0.14);
+  border-top: 1px solid var(--invert-divider);
 }
 
 .rca-highlight-metric {
@@ -3362,7 +3342,7 @@ select {
 }
 
 .report-type-btn.active .report-type-btn-title {
-  color: #ffffff;
+  color: var(--on-selected);
 }
 
 .report-type-btn-desc {
@@ -3372,7 +3352,7 @@ select {
 }
 
 .report-type-btn.active .report-type-btn-desc {
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--on-selected-soft);
 }
 
 .report-type-btn-meta {
@@ -3388,8 +3368,8 @@ select {
 }
 
 .report-type-btn.active .report-type-btn-meta {
-  border-top-color: rgba(255, 255, 255, 0.18);
-  color: rgba(255, 255, 255, 0.6);
+  border-top-color: var(--on-selected-border);
+  color: var(--on-selected-muted);
 }
 
 .report-type-btn-meta-row {
@@ -3471,7 +3451,7 @@ select {
 .config-chip.active {
   background: var(--accent-selected);
   border-color: var(--accent-selected);
-  color: #ffffff;
+  color: var(--on-selected);
 }
 
 .config-checkbox-list {
@@ -3593,7 +3573,7 @@ select {
 .report-generate-btn {
   padding: 0.58rem 1.4rem;
   background: var(--accent-selected);
-  color: #ffffff;
+  color: var(--on-selected);
   border: 1px solid var(--accent-selected);
   border-radius: var(--radius-sm);
   font-size: 0.79rem;
@@ -3643,12 +3623,12 @@ select {
 
 .report-actions-bar button:hover {
   background: var(--accent-selected);
-  color: #ffffff;
+  color: var(--on-selected);
   border-color: var(--accent-selected);
 }
 
 .report-preview {
-  background: #1a1a1c;
+  background: var(--bg-inset);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1.75rem;
@@ -3868,64 +3848,358 @@ select {
   color: var(--text-muted);
 }
 
-/* ---------------- Login page ---------------- */
+/* ---------------- Login page ----------------
+   Split screen: a showcase panel (brand, illustrative service map, feature
+   list) beside the sign-in form. The showcase collapses away on narrow
+   screens, where a compact brand row takes its place above the form. */
 
 .login-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(400px, 1fr);
   min-height: 100vh;
-  background: #161618;
-  padding: 1.5rem;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background: var(--bg-page);
 }
 
-.login-card {
-  width: 100%;
-  max-width: 400px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
-  padding: 2.25rem;
-  box-shadow: var(--shadow-lg);
+/* ---------- Showcase ---------- */
+
+.login-showcase {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 2.5rem 3.5rem;
+  background-color: var(--bg-canvas);
+  background-image: radial-gradient(circle, var(--canvas-dot) 1px, transparent 1px);
+  background-size: 22px 22px;
+  border-right: 1px solid var(--border);
+}
+
+.login-showcase::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(640px circle at 12% 0%, color-mix(in srgb, var(--accent-teal) 16%, transparent), transparent 70%),
+    radial-gradient(560px circle at 100% 100%, color-mix(in srgb, var(--accent-blue) 12%, transparent), transparent 70%);
+}
+
+.login-showcase > * {
+  position: relative;
 }
 
 .login-brand {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  margin-bottom: 1.4rem;
+  gap: 0.75rem;
 }
 
 .login-brand-mark {
-  width: 30px;
-  height: 30px;
-  background: var(--text-primary);
-  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--brand-gradient);
+  color: #ffffff;
   flex-shrink: 0;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent-teal) 35%, transparent);
 }
 
-.login-brand-text h1 {
-  font-size: 1.05rem;
+.login-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.login-brand-name {
+  font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: -0.015em;
+  color: var(--text-primary);
 }
 
-.login-brand-text p {
-  margin: 0;
-  font-size: 0.68rem;
+.login-brand-tag {
+  font-size: 0.62rem;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.08em;
   font-family: var(--font-mono);
 }
 
-.login-description {
-  font-size: 0.82rem;
+.login-showcase-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 560px;
+}
+
+.login-headline {
+  font-size: clamp(1.9rem, 1.2rem + 1.6vw, 2.6rem);
+  font-weight: 750;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  color: var(--text-primary);
+}
+
+.login-headline-accent {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.login-lede {
+  font-size: 0.92rem;
+  line-height: 1.65;
   color: var(--text-secondary);
-  margin-bottom: 1.5rem;
-  line-height: 1.6;
+  max-width: 48ch;
+}
+
+/* Illustrative service map */
+
+.login-map-card {
+  background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.9rem 1rem 0.6rem;
+  box-shadow: var(--shadow-card-hover);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.login-map-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.login-map-card-title {
+  font-size: 0.64rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.login-map-card-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--accent-teal);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.login-map-card-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-teal);
+  animation: live-blink 2s ease-in-out infinite;
+}
+
+.login-map {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.login-map-edge {
+  fill: none;
+  stroke: var(--graph-edge);
+  stroke-width: 1.5;
+}
+
+.login-map-edge.is-failing {
+  stroke: var(--accent-red);
+  stroke-dasharray: 4 4;
+}
+
+.login-map-packet {
+  fill: var(--accent-teal);
+}
+
+.login-map-packet.is-failing {
+  fill: var(--accent-red);
+}
+
+.login-map-node {
+  fill: var(--bg-surface-raised);
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.login-map-node.tone-warn {
+  stroke: var(--accent-amber);
+}
+
+.login-map-node.tone-bad {
+  stroke: var(--accent-red);
+  stroke-width: 1.5;
+}
+
+.login-map-halo {
+  fill: var(--accent-red-soft);
+  stroke: color-mix(in srgb, var(--accent-red) 30%, transparent);
+  stroke-width: 1;
+  animation: login-halo 2.4s ease-in-out infinite;
+}
+
+@keyframes login-halo {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.login-map-dot.tone-ok {
+  fill: var(--accent-green);
+}
+
+.login-map-dot.tone-warn {
+  fill: var(--accent-amber);
+}
+
+.login-map-dot.tone-bad {
+  fill: var(--accent-red);
+}
+
+.login-map-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  fill: var(--text-primary);
+}
+
+.login-map-tag {
+  fill: var(--accent-red);
+}
+
+.login-map-tag-text {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  fill: #ffffff;
+}
+
+/* Feature list */
+
+.login-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.login-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+.login-feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  color: var(--accent-teal);
+  background: var(--accent-teal-soft);
+  border: 1px solid color-mix(in srgb, var(--accent-teal) 25%, transparent);
+}
+
+.login-feature-title {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.login-feature-body {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.login-showcase-foot {
+  font-size: 0.66rem;
+  color: var(--text-faint);
+  letter-spacing: 0.02em;
+}
+
+/* ---------- Sign-in panel ---------- */
+
+.login-main {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+}
+
+.login-theme-toggle {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-card);
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.login-theme-toggle:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+}
+
+.login-panel {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.login-brand-compact {
+  display: none;
+}
+
+.login-panel-head h2 {
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.login-panel-head p {
+  margin-top: 0.4rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
 }
 
 .login-form {
@@ -3937,67 +4211,133 @@ select {
 .login-field {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
 
 .login-field label {
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
-.login-field input {
-  padding: 0.62rem 0.85rem;
+.login-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-input-icon {
+  position: absolute;
+  left: 0.85rem;
+  color: var(--text-faint);
+  pointer-events: none;
+  transition: color var(--transition);
+}
+
+.login-input input {
+  width: 100%;
+  height: 44px;
+  padding: 0 2.6rem 0 2.5rem;
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  font-size: 0.87rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-card);
   outline: none;
   transition: border-color var(--transition), box-shadow var(--transition);
-  background: var(--bg-inset);
-  color: var(--text-primary);
 }
 
-.login-field input:focus {
-  border-color: var(--text-primary);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+.login-input input::placeholder {
+  color: var(--text-faint);
 }
 
-.login-error {
-  margin: 0;
-  font-size: 0.76rem;
-  color: var(--text-primary);
-  font-weight: 600;
-  padding: 0.55rem 0.75rem;
-  background: var(--bg-surface-raised);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
+.login-input input:hover {
+  border-color: color-mix(in srgb, var(--text-primary) 30%, var(--border-strong));
 }
 
-.login-submit {
-  padding: 0.72rem;
-  background: var(--accent-selected);
-  color: #ffffff;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
+.login-input input:focus,
+.login-input input:focus-visible {
+  border-color: var(--accent-teal);
+  box-shadow: 0 0 0 3px var(--accent-teal-soft);
+}
+
+.login-input:focus-within .login-input-icon {
+  color: var(--accent-teal);
+}
+
+.login-input-action {
+  position: absolute;
+  right: 0.4rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.55rem;
-  transition: background var(--transition);
-  margin-top: 0.3rem;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-faint);
+  transition: color var(--transition), background var(--transition);
 }
 
-.login-submit:hover {
-  background: var(--accent-selected-hover);
+.login-input-action:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.login-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.65rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--accent-red);
+  background: var(--accent-red-soft);
+  border: 1px solid color-mix(in srgb, var(--accent-red) 30%, transparent);
+  border-radius: 10px;
+}
+
+.login-error svg {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.login-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 44px;
+  margin-top: 0.35rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--brand-gradient);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent-teal) 28%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: filter var(--transition), box-shadow var(--transition);
+}
+
+.login-submit svg {
+  transition: transform var(--transition);
+}
+
+.login-submit:hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+
+.login-submit:hover:not(:disabled) svg {
+  transform: translateX(2px);
 }
 
 .login-submit:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
@@ -4016,12 +4356,42 @@ select {
   }
 }
 
+.login-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  color: var(--text-faint);
+}
+
+@media (max-width: 960px) {
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+
+  .login-showcase {
+    display: none;
+  }
+
+  .login-brand-compact {
+    display: flex;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-map-halo,
+  .login-map-card-live-dot {
+    animation: none;
+  }
+}
+
 /* ---------------- Command palette ---------------- */
 
 .command-palette-scrim {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--scrim);
   backdrop-filter: blur(3px);
   z-index: 500;
   display: flex;
@@ -4033,7 +4403,7 @@ select {
   width: 100%;
   max-width: 560px;
   height: fit-content;
-  background: #2c2c2e;
+  background: var(--bg-popover);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
@@ -4114,7 +4484,7 @@ select {
 .notif-scrim {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--scrim-soft);
   z-index: 500;
 }
 
@@ -4125,7 +4495,7 @@ select {
   bottom: 0;
   width: 400px;
   max-width: 100vw;
-  background: #232325;
+  background: var(--bg-surface);
   border-left: 1px solid var(--border-strong);
   z-index: 501;
   display: flex;
@@ -4216,7 +4586,7 @@ select {
 
 .notif-action-btn:hover {
   background: var(--accent-selected);
-  color: #ffffff;
+  color: var(--on-selected);
   border-color: var(--accent-selected);
 }
 
@@ -4319,7 +4689,7 @@ select {
 .service-inspector-scrim {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--scrim);
   backdrop-filter: blur(3px);
   z-index: 500;
 }
@@ -4341,7 +4711,7 @@ select {
 }
 
 .service-inspector-overlay.as-modal .service-inspector-panel {
-  background: #2c2c2e;
+  background: var(--bg-popover);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
@@ -4402,7 +4772,7 @@ select {
 
 .service-inspector-actions button:hover {
   background: var(--accent-selected);
-  color: #ffffff;
+  color: var(--on-selected);
   border-color: var(--accent-selected);
 }
 
@@ -4548,7 +4918,7 @@ select {
   margin-top: 0.3rem;
   padding: 0.4rem 0.85rem;
   background: var(--accent-selected);
-  color: #ffffff;
+  color: var(--on-selected);
   border: none;
   border-radius: var(--radius-sm);
   font-size: 0.75rem;
@@ -4583,6 +4953,470 @@ select {
 .data-provenance strong {
   color: var(--text-muted);
   font-weight: 600;
+}
+
+/* =====================================================================
+   Refinement layer
+   Shell, cards, charts and interaction polish shared by both themes.
+   Kept in one block (after the component sections, before the responsive
+   overrides) so it can override earlier rules without !important.
+   ===================================================================== */
+
+/* ---------- Topbar: breadcrumb + status chips ---------- */
+
+.topbar-main {
+  height: 56px;
+  gap: 0.9rem;
+  padding: 0 1.75rem;
+}
+
+.topbar-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.topbar-crumb-root {
+  color: var(--text-muted);
+}
+
+.topbar-crumb-sep {
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+.topbar-crumb-current {
+  color: var(--text-primary);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-chips {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-left: 0.9rem;
+  margin-left: 0.15rem;
+  border-left: 1px solid var(--border-hairline);
+}
+
+.topbar-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 26px;
+  padding: 0 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.topbar-chip .mono {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.topbar-chip-dot {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-faint);
+  flex-shrink: 0;
+}
+
+.topbar-chip.tone-good {
+  border-color: color-mix(in srgb, var(--accent-green) 35%, transparent);
+  background: var(--accent-green-soft);
+}
+
+.topbar-chip.tone-good .topbar-chip-dot {
+  background: var(--accent-green);
+}
+
+.topbar-chip.tone-bad {
+  border-color: color-mix(in srgb, var(--accent-red) 40%, transparent);
+  background: var(--accent-red-soft);
+  color: var(--accent-red);
+}
+
+.topbar-chip.tone-bad .mono {
+  color: var(--accent-red);
+}
+
+.topbar-chip.tone-bad .topbar-chip-dot {
+  background: var(--accent-red);
+}
+
+.topbar-chip.tone-live {
+  border-color: var(--accent-teal-border);
+  background: var(--accent-teal-soft);
+  color: var(--text-primary);
+}
+
+.topbar-chip.tone-live .topbar-chip-dot {
+  background: var(--accent-teal);
+}
+
+.topbar-chip-dot.is-pulsing::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent-teal);
+  animation: chip-pulse 1.8s ease-out infinite;
+}
+
+@keyframes chip-pulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+/* ---------- Sidebar ---------- */
+
+.sidebar-brand {
+  height: 56px;
+}
+
+.sidebar-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--brand-gradient);
+  color: #ffffff;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent-teal) 35%, transparent);
+}
+
+.sidebar-link {
+  border-left: none;
+  padding: 0.5rem 0.65rem;
+  border-radius: 7px;
+  position: relative;
+}
+
+.sidebar-link.active {
+  background: var(--accent-teal-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-teal) 22%, transparent);
+}
+
+.sidebar-link.active::before {
+  content: "";
+  position: absolute;
+  left: -0.7rem;
+  top: 0.55rem;
+  bottom: 0.55rem;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent-teal);
+}
+
+.sidebar-link.active .sidebar-link-icon {
+  color: var(--accent-teal);
+}
+
+.sidebar-utility-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+}
+
+/* ---------- Page scaffold ---------- */
+
+.app-main {
+  padding: 2rem 2.25rem 3.5rem;
+}
+
+.page-header {
+  padding-bottom: 1.1rem;
+  border-bottom-color: var(--border-hairline);
+}
+
+.page-header h1 {
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.route-fade {
+  animation: route-fade-in 220ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes route-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- Surfaces ---------- */
+
+.panel,
+.summary-item,
+.service-inspector-section,
+.explorer-list,
+.trend-card,
+.dominant-chart {
+  box-shadow: var(--shadow-card);
+}
+
+.panel {
+  border-radius: 12px;
+}
+
+/* ---------- KPI tiles ---------- */
+
+.summary-row {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.85rem;
+}
+
+.summary-item {
+  position: relative;
+  overflow: hidden;
+  container-type: inline-size;
+  border-radius: 12px;
+  padding: 1rem 1.15rem 1.05rem;
+  gap: 0.35rem;
+  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+
+.summary-item:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.summary-value {
+  /* Scales with the tile (container query units) so long values such as
+     "100.00 req/s" fit narrow tiles; anything still too long wraps its
+     unit onto a second line rather than overflowing the tile. */
+  font-size: clamp(1.15rem, 16cqi, 1.65rem);
+  line-height: 1.15;
+}
+
+.summary-item.tone-critical {
+  background: linear-gradient(180deg, var(--accent-red-soft), transparent 70%), var(--bg-surface);
+  border-color: color-mix(in srgb, var(--accent-red) 35%, var(--border));
+}
+
+.summary-item.tone-critical::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: var(--accent-red);
+}
+
+.summary-item.tone-critical .summary-label {
+  color: var(--accent-red);
+}
+
+/* Critical values: colour, not underline (underlines read as links). */
+.summary-value.tone-critical,
+.service-card-metric-value.critical,
+.cell-elevated,
+.inspector-row-value.is-elevated {
+  text-decoration: none;
+  color: var(--critical-fg);
+}
+
+.topology-node-status.down {
+  text-decoration: none;
+  fill: var(--accent-red);
+}
+
+/* ---------- Charts ---------- */
+
+.linechart-line {
+  stroke: var(--chart-line);
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.linechart.tone-critical .linechart-line {
+  stroke: var(--chart-line-critical);
+}
+
+.linechart-grad-stop {
+  stop-color: var(--chart-line);
+}
+
+.linechart.tone-critical .linechart-grad-stop {
+  stop-color: var(--chart-line-critical);
+}
+
+.linechart-grad-stop.is-top {
+  stop-opacity: var(--chart-fill-opacity);
+}
+
+.linechart-grad-stop.is-bottom {
+  stop-opacity: 0;
+}
+
+.linechart-live-dot {
+  fill: var(--chart-line);
+}
+
+.linechart-live-ring {
+  stroke: var(--chart-line);
+}
+
+.linechart.tone-critical .linechart-live-dot {
+  fill: var(--chart-line-critical);
+}
+
+.linechart.tone-critical .linechart-live-ring {
+  stroke: var(--chart-line-critical);
+}
+
+.linechart-axis {
+  stroke: var(--border);
+}
+
+/* ---------- Tables ---------- */
+
+.data-table tbody tr {
+  transition: background var(--transition-fast);
+}
+
+.data-table tbody tr:hover td {
+  background: var(--bg-hover);
+}
+
+/* ---------- Services explorer: right-rail lists stack instead of wrapping ---------- */
+
+.service-inspector-edge-list li {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}
+
+.service-inspector-edge-list li > span:first-child {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.service-inspector-event-list li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.1rem 0.6rem;
+}
+
+.service-inspector-event-list li > span:first-child {
+  grid-column: 1 / -1;
+  font-size: 0.66rem;
+  font-family: var(--font-mono);
+}
+
+/* ---------- Topology graph: legible type, state in colour ---------- */
+
+.topology-node-name {
+  font-size: 12.5px;
+}
+
+.topology-node-status {
+  font-size: 10.5px;
+}
+
+.topology-node-metric {
+  font-size: 12px;
+}
+
+.topology-node-group:hover .topology-node-rect {
+  stroke: var(--accent-teal);
+}
+
+.topology-node-rect.selected {
+  stroke: var(--accent-teal);
+}
+
+.topology-node-rect.degraded {
+  stroke: var(--accent-amber);
+}
+
+.topology-node-rect.down {
+  stroke: var(--accent-red);
+}
+
+.topology-node-status.degraded {
+  fill: var(--accent-amber);
+}
+
+.topology-edge.has-failures {
+  stroke: var(--accent-red);
+}
+
+.topology-node-dotfill {
+  opacity: 0.35;
+}
+
+.topology-arrowhead.failed,
+.topology-traffic-dot.has-failures {
+  fill: var(--accent-red);
+}
+
+/* ---------- Buttons & focus ---------- */
+
+.btn-primary-accent {
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: filter var(--transition), transform var(--transition-fast);
+}
+
+.btn-primary-accent:hover {
+  filter: brightness(1.06);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+
+:where(button, a, input, select, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-fade,
+  .topbar-chip-dot.is-pulsing::after {
+    animation: none;
+  }
+}
+
+@media (max-width: 1280px) {
+  .topbar-chip:last-child {
+    display: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .topbar-crumb-root,
+  .topbar-crumb-sep {
+    display: none;
+  }
 }
 
 /* ---------------- Responsive ---------------- */

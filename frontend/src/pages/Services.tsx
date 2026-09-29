@@ -97,12 +97,12 @@ export default function Services() {
                 <h2>Request rate</h2>
                 <span className="dominant-chart-value">{fmtRate(d.requestRate)}</span>
               </div>
-              <LineChart samples={d.requestRateSamples} width={720} height={160} yFormat={(v) => `${v.toFixed(2)}/s`} />
+              <LineChart samples={d.requestRateSamples} height={160} yFormat={(v) => `${v.toFixed(2)}/s`} />
             </div>
 
             <div className="trend-card" style={{ border: "1px solid var(--border)" }}>
               <h3>P95 latency (15m)</h3>
-              <LineChart samples={d.latencySamples} width={700} height={120} yFormat={(v) => `${(v * 1000).toFixed(0)}ms`} />
+              <LineChart samples={d.latencySamples} height={120} yFormat={(v) => `${(v * 1000).toFixed(0)}ms`} />
             </div>
           </SectionState>
         </div>

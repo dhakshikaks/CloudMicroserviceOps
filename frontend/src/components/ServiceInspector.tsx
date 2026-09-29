@@ -81,13 +81,12 @@ export default function ServiceInspector({ serviceName, onClose }: Props) {
 
       <div className="service-inspector-section">
         <h3>Traffic — request rate (last 15 min)</h3>
-        <LineChart samples={d.requestRateSamples} width={340} height={110} yFormat={(v) => `${v.toFixed(1)}/s`} />
+        <LineChart samples={d.requestRateSamples} height={110} yFormat={(v) => `${v.toFixed(1)}/s`} />
       </div>
       <div className="service-inspector-section">
         <h3>Traffic — error rate (last 15 min)</h3>
         <LineChart
           samples={d.errorSamples}
-          width={340}
           height={110}
           yFormat={(v) => `${v.toFixed(2)}/s`}
           tone={d.errorSamples.some((s) => s.value > 0) ? "critical" : "default"}
@@ -95,7 +94,7 @@ export default function ServiceInspector({ serviceName, onClose }: Props) {
       </div>
       <div className="service-inspector-section">
         <h3>Traffic — P95 latency (last 15 min)</h3>
-        <LineChart samples={d.latencySamples} width={340} height={110} yFormat={(v) => `${(v * 1000).toFixed(0)}ms`} />
+        <LineChart samples={d.latencySamples} height={110} yFormat={(v) => `${(v * 1000).toFixed(0)}ms`} />
       </div>
 
       <div className="service-inspector-section">

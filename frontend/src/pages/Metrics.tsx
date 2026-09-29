@@ -150,7 +150,7 @@ export default function Metrics() {
             <span className="dominant-chart-value">{totalNow === undefined ? "—" : `${totalNow.toFixed(2)}/s`}</span>
           </div>
         </div>
-        <LineChart samples={totalSamples} width={1200} height={220} yFormat={(v) => `${v.toFixed(1)}/s`} />
+        <LineChart samples={totalSamples} height={220} yFormat={(v) => `${v.toFixed(1)}/s`} />
         <MetricExplainer
           text={
             totalNow === undefined
