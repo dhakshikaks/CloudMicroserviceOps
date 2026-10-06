@@ -1,0 +1,293 @@
+# Render Blueprint for the full stack (New -> Blueprint in the Render dashboard).
+# Mirrors docker-compose.yml: only the frontend is public; everything else is a
+# private service reached over Render's private network. Grafana is omitted.
+
+envVarGroups:
+  - name: cloudops-shared
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: LOG_LEVEL
+        value: INFO
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=75
+
+databases:
+  - name: cloudops-db
+    databaseName: cloudops
+    user: cloudops
+    region: singapore
+    plan: basic-256mb
+
+services:
+  - type: pserv
+    name: kafka
+    runtime: docker
+    region: singapore
+    plan: starter
+    dockerfilePath: ./infrastructure/kafka/Dockerfile
+    dockerContext: ./infrastructure/kafka
+
+  - type: pserv
+    name: backend
+    runtime: docker
+    region: singapore
+    plan: starter
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    envVars:
+      - fromGroup: cloudops-shared
+      - key: SERVER_PORT
+        value: "8080"
+      - key: DB_HOST
+        fromDatabase:
+          name: cloudops-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: cloudops-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: cloudops-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: cloudops-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: cloudops-db
+          property: password
+      - key: KAFKA_HOST
+        fromService:
+          type: pserv
+          name: kafka
+          property: host
+      - key: KAFKA_PORT
+        value: "29092"
+      - key: PROMETHEUS_HOSTPORT
+        fromService:
+          type: pserv
+          name: prometheus
+          property: hostport
+
+  - type: pserv
+    name: user-service
+    runtime: docker
+    region: singapore
+    plan: starter
+    dockerfilePath: ./microservices/user-service/Dockerfile
+    dockerContext: .
+    envVars:
+      - fromGroup: cloudops-shared
+      - key: SERVER_PORT
+        value: "8081"
+      - key: DB_HOST
+        fromDatabase:
+          name: cloudops-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: cloudops-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: cloudops-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: cloudops-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: cloudops-db
+          property: password
+      - key: KAFKA_HOST
+        fromService:
+          type: pserv
+          name: kafka
+          property: host
+      - key: KAFKA_PORT
+        value: "29092"
+      - key: ORDER_SERVICE_HOSTPORT
+        fromService:
+          type: pserv
+          name: order-service
+          property: hostport
+
+  - type: pserv
+    name: order-service
+    runtime: docker
+    region: singapore
+    plan: starter
+    dockerfilePath: ./microservices/order-service/Dockerfile
+    dockerContext: .
+    envVars:
+      - fromGroup: cloudops-shared
+      - key: SERVER_PORT
+        value: "8082"
+      - key: DB_HOST
+        fromDatabase:
+          name: cloudops-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: cloudops-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: cloudops-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: cloudops-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: cloudops-db
+          property: password
+      - key: KAFKA_HOST
+        fromService:
+          type: pserv
+          name: kafka
+          property: host
+      - key: KAFKA_PORT
+        value: "29092"
+      - key: PAYMENT_SERVICE_HOSTPORT
+        fromService:
+          type: pserv
+          name: payment-service
+          property: hostport
+
+  - type: pserv
+    name: payment-service
+    runtime: docker
+    region: singapore
+    plan: starter
+    dockerfilePath: ./microservices/payment-service/Dockerfile
+    dockerContext: .
+    envVars:
+      - fromGroup: cloudops-shared
+      - key: SERVER_PORT
+        value: "8083"
+      - key: DB_HOST
+        fromDatabase:
+          name: cloudops-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: cloudops-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: cloudops-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: cloudops-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: cloudops-db
+          property: password
+      - key: KAFKA_HOST
+        fromService:
+          type: pserv
+          name: kafka
+          property: host
+      - key: KAFKA_PORT
+        value: "29092"
+      - key: INVENTORY_SERVICE_HOSTPORT
+        fromService:
+          type: pserv
+          name: inventory-service
+          property: hostport
+
+  - type: pserv
+    name: inventory-service
+    runtime: docker
+    region: singapore
+    plan: starter
+    dockerfilePath: ./microservices/inventory-service/Dockerfile
+    dockerContext: .
+    envVars:
+      - fromGroup: cloudops-shared
+      - key: SERVER_PORT
+        value: "8084"
+      - key: DB_HOST
+        fromDatabase:
+          name: cloudops-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: cloudops-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: cloudops-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: cloudops-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: cloudops-db
+          property: password
+      - key: KAFKA_HOST
+        fromService:
+          type: pserv
+          name: kafka
+          property: host
+      - key: KAFKA_PORT
+        value: "29092"
+
+  - type: pserv
+    name: prometheus
+    runtime: docker
+    region: singapore
+    plan: starter
+    dockerfilePath: ./infrastructure/prometheus/Dockerfile
+    dockerContext: ./infrastructure/prometheus
+    envVars:
+      - key: BACKEND_HOSTPORT
+        fromService:
+          type: pserv
+          name: backend
+          property: hostport
+      - key: USER_SERVICE_HOSTPORT
+        fromService:
+          type: pserv
+          name: user-service
+          property: hostport
+      - key: ORDER_SERVICE_HOSTPORT
+        fromService:
+          type: pserv
+          name: order-service
+          property: hostport
+      - key: PAYMENT_SERVICE_HOSTPORT
+        fromService:
+          type: pserv
+          name: payment-service
+          property: hostport
+      - key: INVENTORY_SERVICE_HOSTPORT
+        fromService:
+          type: pserv
+          name: inventory-service
+          property: hostport
+
+  - type: web
+    name: cloudops-frontend
+    runtime: docker
+    region: singapore
+    plan: starter
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    healthCheckPath: /
+    envVars:
+      - key: BACKEND_HOSTPORT
+        fromService:
+          type: pserv
+          name: backend
+          property: hostport
