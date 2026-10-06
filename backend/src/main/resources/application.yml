@@ -2,7 +2,7 @@ spring:
   application:
     name: backend
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/cloudops}
+    url: ${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:cloudops}}
     username: ${DB_USERNAME:cloudops}
     password: ${DB_PASSWORD:cloudops}
   jpa:
@@ -13,7 +13,7 @@ spring:
         format_sql: false
     open-in-view: false
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:${KAFKA_HOST:localhost}:${KAFKA_PORT:9092}}
     consumer:
       group-id: backend
       auto-offset-reset: earliest
@@ -27,7 +27,7 @@ frontend:
   url: ${FRONTEND_URL:http://localhost:3000}
 
 prometheus:
-  url: ${PROMETHEUS_URL:http://prometheus:9090}
+  url: ${PROMETHEUS_URL:http://${PROMETHEUS_HOSTPORT:prometheus:9090}}
 
 jwt:
   secret: ${JWT_SECRET:dev-only-secret-change-me-please-32-bytes-min}

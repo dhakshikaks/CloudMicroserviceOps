@@ -15,5 +15,9 @@ RUN npm run build
 # ---- Runtime stage ----
 FROM nginx:1.27-alpine
 COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Rendered to /etc/nginx/conf.d/default.conf at start-up; only the variables
+# set below (or overridden by the platform) are substituted.
+COPY nginx.conf /etc/nginx/templates/default.conf.template
+ENV BACKEND_HOSTPORT=backend:8080
+ENV PORT=80
 EXPOSE 80

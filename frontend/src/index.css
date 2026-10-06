@@ -109,6 +109,12 @@
   --chart-fill-opacity: 0.22;
   --critical-fg: var(--accent-red);
   --brand-gradient: linear-gradient(135deg, #3ecfcf 0%, #4a9eff 100%);
+  --incident-bg: #1b2a3d;
+  --incident-border: rgba(74, 158, 255, 0.38);
+  --incident-fg: #dcebff;
+  --incident-fg-muted: #8fb4df;
+  --incident-label: #7ab8ff;
+  --incident-divider: rgba(74, 158, 255, 0.22);
 
   --radius: 8px;
   --radius-sm: 5px;
@@ -213,6 +219,12 @@
   --shadow-card-hover: 0 2px 4px rgba(16, 24, 40, 0.05), 0 10px 24px rgba(16, 24, 40, 0.08);
   --chart-fill-opacity: 0.16;
   --brand-gradient: linear-gradient(135deg, #0f9b9b 0%, #1a6fd6 100%);
+  --incident-bg: #eaf3ff;
+  --incident-border: #bcd7fa;
+  --incident-fg: #0d3b73;
+  --incident-fg-muted: #4a6f9c;
+  --incident-label: #1a6fd6;
+  --incident-divider: rgba(26, 111, 214, 0.18);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
@@ -2950,25 +2962,25 @@ select {
   flex-direction: column;
   gap: 0.5rem;
   padding: 1.1rem 1.2rem;
-  background: var(--invert-bg);
-  border: 1px solid var(--invert-bg);
+  background: var(--incident-bg);
+  border: 1px solid var(--incident-border);
   border-radius: var(--radius);
-  color: var(--invert-fg);
+  color: var(--incident-fg);
 }
 
 .rca-highlight .rca-state-label.tone-critical {
-  color: var(--invert-fg);
+  color: var(--incident-label);
 }
 
 .rca-highlight .rca-highlight-reason {
-  color: var(--invert-fg-muted);
+  color: var(--incident-fg-muted);
 }
 
 .rca-highlight-service {
   font-size: 1.35rem;
   font-weight: 700;
   font-family: var(--font-mono);
-  color: var(--invert-fg);
+  color: var(--incident-fg);
   letter-spacing: -0.01em;
 }
 
@@ -2978,7 +2990,7 @@ select {
   gap: 1.1rem 1.75rem;
   margin-top: 0.4rem;
   padding-top: 0.65rem;
-  border-top: 1px solid var(--invert-divider);
+  border-top: 1px solid var(--incident-divider);
 }
 
 .rca-highlight-metric {
@@ -2991,7 +3003,7 @@ select {
   font-size: 0.62rem;
   font-weight: 600;
   text-transform: uppercase;
-  color: var(--invert-fg-muted);
+  color: var(--incident-fg-muted);
   font-family: var(--font-mono);
 }
 
@@ -2999,7 +3011,7 @@ select {
   font-size: 0.9rem;
   font-weight: 700;
   font-family: var(--font-mono);
-  color: var(--invert-fg);
+  color: var(--incident-fg);
 }
 
 .rca-list {
