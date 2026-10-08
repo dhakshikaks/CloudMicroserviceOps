@@ -5,11 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-/**
- * Allows the browser-based dashboard (served from a different origin, no
- * gateway in front of the backend) to call the read-only {@code /api/**}
- * endpoints.
- */
+
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 
