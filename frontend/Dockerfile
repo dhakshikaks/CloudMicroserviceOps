@@ -5,8 +5,6 @@ COPY package.json package-lock.json* ./
 RUN npm install
 COPY . .
 
-# Vite inlines this into the JS bundle at build time - it must be passed
-# as a build arg (docker-compose.yml environment: has no effect on a static build).
 ARG VITE_API_BASE_URL=/api
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
